@@ -4,7 +4,10 @@ import time
 import pkg_resources
 import logging
 import stomp
+import ConfigParser
+
 from receiver.Receiver import EMSReceiver
+from utils.Utils import get_map
 
 __author__ = 'lto'
 
@@ -20,9 +23,13 @@ LEVELS = {'0': logging.DEBUG,
 
 
 def main():
-    config_file_name = pkg_resources.resource_filename('etc', 'config.ini')
-    conn = stomp.Connection()
-    conn.set_listener('', EMSReceiver())
+    config_file_name = pkg_resources.resource_filename('etc', 'conf.ini')
+    log.debug(config_file_name)
+    config = ConfigParser.ConfigParser()
+    config.read(config_file_name)
+    _map = get_map(section='ems', config=config)
+    conn = stomp.Connection(host_and_ports=[(_map.get("orch_ip"), int(_map.get("orch_port")))])
+    conn.set_listener('ems_receiver', EMSReceiver(conn=conn))
     conn.start()
     conn.connect()
 
@@ -32,6 +39,7 @@ def main():
         while True:
             time.sleep(10000)
     except KeyboardInterrupt:
+        conn.disconnect()
         sys.exit(0)
 
 

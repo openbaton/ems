@@ -1,23 +1,34 @@
-__author__ = 'lto'
+import json
+import logging
+import subprocess
 
-import time
-import sys
+__author__ = 'lto'
 
 import stomp
 
+log = logging.getLogger(__name__)
+
 class EMSReceiver(stomp.ConnectionListener):
 
-    def __init__(self, orch_ip="localhost", orch_port="61613"):
-        self.orch_ip = orch_ip
-        self.orch_port = orch_port
+    def __init__(self, conn):
+        self.conn = conn
 
     def on_error(self, headers, message):
-        print('received an error %s' % message)
+        log.info('received an error %s' % message)
 
     def on_message(self, headers, message):
-        print('received a message %s' % message)
+        log.info('received a message %s' % message)
+        proc = subprocess.Popen(message.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        status = proc.wait()
+        out, err = proc.communicate()
 
-        resp = "ak"
-        conn = stomp.Connection(host_and_ports=self.orch_ip + ":" + self.orch_port)
-        conn.send(body=resp, destination='/queue/ems-vnfm-actions')
+
+        resp = {
+            'output': out,
+            'err': err,
+            'status': status
+        }
+        json_str = json.dumps(resp)
+        log.info("answer is: " + json_str)
+        self.conn.send(body=json_str, destination='/queue/ems-vnfm-actions')
 
