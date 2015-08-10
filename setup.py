@@ -8,9 +8,9 @@ setup(name='ElementManagementSystem',
       author='Fraunhofer FOKUS',
       url='https://github.com/openbaton/',
       install_requires=[
-          'stomp.py'
+          'stomp.py', 'gitpython'
       ],
       packages=[
-          'receiver','utils'
-      ],
+          'receiver', 'utils'
+      ]
       )

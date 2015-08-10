@@ -23,17 +23,18 @@ LEVELS = {'0': logging.DEBUG,
 
 
 def main():
-    config_file_name = pkg_resources.resource_filename('etc', 'conf.ini')
+    # config_file_name = pkg_resources.resource_filename('etc', '/etc/openbaton/ems/conf.properties')
+    config_file_name = "/etc/openbaton/ems/conf.ini"
     log.debug(config_file_name)
     config = ConfigParser.ConfigParser()
     config.read(config_file_name)
     _map = get_map(section='ems', config=config)
+    hostname = _map.get("hostname","generic")
     conn = stomp.Connection(host_and_ports=[(_map.get("orch_ip"), int(_map.get("orch_port")))])
-    conn.set_listener('ems_receiver', EMSReceiver(conn=conn))
+    conn.set_listener('ems_receiver', EMSReceiver(conn=conn, hostname=hostname))
     conn.start()
     conn.connect()
-
-    conn.subscribe(destination='/queue/vnfm-ems-actions', id=1, ack='auto')
+    conn.subscribe(destination='/queue/%s-ems-actions' % hostname, id=1, ack='auto')
 
     try:
         while True:
