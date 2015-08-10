@@ -1,7 +1,8 @@
 import json
 import logging
 import subprocess
-from git import Repo
+import traceback
+from git import Repo, GitCommandError
 import os
 
 __author__ = 'lto'
@@ -35,14 +36,20 @@ class EMSReceiver(stomp.ConnectionListener):
                 os.makedirs(SCRIPTS_PATH)
             url = payload
             log.debug("Cloning into: %s" % url)
-            Repo.clone_from(url, "/opt/openbaton/scripts/")
-            out = str(os.listdir(SCRIPTS_PATH))
-            err = None
-            status = 0
+            try:
+                Repo.clone_from(url, "/opt/openbaton/scripts/")
+            except GitCommandError as e:
+                err = traceback.format_exc()
+                status = e.status
+                out = None
+            else:
+                out = str(os.listdir(SCRIPTS_PATH))
+                err = None
+                status = 0
         elif action == "EXECUTE":
             payload = SCRIPTS_PATH + "/" + payload
             log.debug("Executing: " + payload)
-            proc = subprocess.Popen(payload.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            proc = subprocess.Popen(["sh"] + payload.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             status = proc.wait()
 
             out, err = proc.communicate()
