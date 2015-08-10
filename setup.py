@@ -7,7 +7,10 @@ setup(name='ElementManagementSystem',
       description='Element Management System. See ETSI NFV',
       author='Fraunhofer FOKUS',
       url='https://github.com/openbaton/',
-      packages=[
+      install_requires=[
           'stomp.py'
+      ],
+      packages=[
+          'receiver','utils'
       ],
       )
