@@ -2,6 +2,7 @@ import json
 import logging
 import subprocess
 import traceback
+from core.Managers import ConfigurationManager
 from git import Repo, GitCommandError
 import os
 
@@ -18,16 +19,17 @@ class EMSReceiver(stomp.ConnectionListener):
     def __init__(self, conn, hostname="generic"):
         self.conn = conn
         self.hostname = hostname
+        self.configuration_manager = ConfigurationManager()
 
     def on_error(self, headers, message):
         log.info('received an error %s' % message)
 
     def on_message(self, headers, message):
 
+        log.info('received a message: %s' % message)
         dict_msg = json.loads(message)
 
         action = dict_msg.get('action')
-        log.info('received a message %s' % message)
 
         payload = dict_msg.get('payload')
 
@@ -44,7 +46,7 @@ class EMSReceiver(stomp.ConnectionListener):
                 out = None
             else:
                 out = str(os.listdir(SCRIPTS_PATH))
-                err = None
+                err = ""
                 status = 0
         elif action == "EXECUTE":
             payload = SCRIPTS_PATH + "/" + payload
@@ -53,6 +55,14 @@ class EMSReceiver(stomp.ConnectionListener):
             status = proc.wait()
 
             out, err = proc.communicate()
+        elif action == "CONFIGURATION_UPDATE":
+            res = {}
+            for k, v in payload.iteritems():
+                res[k] = str(self.configuration_manager.query(key=k))
+                log.debug("key = %s, value = %s" % (k, res[k]))
+            out = res
+            err = ""
+            status = 0
 
         resp = {
             'output': out,
