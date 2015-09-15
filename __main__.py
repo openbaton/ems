@@ -37,7 +37,7 @@ def main():
     conn.set_listener('ems_receiver', EMSReceiver(conn=conn, hostname=hostname))
     conn.start()
     conn.connect()
-    conn.send(body='hostname:%s' % hostname,destination='/queue/ems-%s-register' % queue_type)
+    conn.send(body='{"hostname":"%s"}' % hostname,destination='/queue/ems-%s-register' % queue_type)
     conn.subscribe(destination='/queue/vnfm-%s-actions' % queue_type, id=1, ack='auto')
     try:
         while True:
