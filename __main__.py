@@ -25,17 +25,20 @@ LEVELS = {'0': logging.DEBUG,
 def main():
     # config_file_name = pkg_resources.resource_filename('etc', '/etc/openbaton/ems/conf.properties')
     config_file_name = "/etc/openbaton/ems/conf.ini"
+    # pass the name to debugger
     log.debug(config_file_name)
-    config = ConfigParser.ConfigParser()
-    config.read(config_file_name)
-    _map = get_map(section='ems', config=config)
-    hostname = _map.get("hostname","generic")
+    config = ConfigParser.ConfigParser() #create parser object
+    config.read(config_file_name) #read config file
+    _map = get_map(section='ems', config=config) #get the data from map
+    hostname = _map.get("hostname") #get the hostname
+    queue_type = _map.get("type")
+    hostname = _map.get("hostname")
     conn = stomp.Connection(host_and_ports=[(_map.get("orch_ip"), int(_map.get("orch_port")))])
     conn.set_listener('ems_receiver', EMSReceiver(conn=conn, hostname=hostname))
     conn.start()
     conn.connect()
-    conn.subscribe(destination='/queue/vnfm-%s-actions' % hostname, id=1, ack='auto')
-
+    conn.send(body='hostname:%s' % hostname,destination='/queue/ems-%s-register' % queue_type)
+    conn.subscribe(destination='/queue/vnfm-%s-actions' % queue_type, id=1, ack='auto')
     try:
         while True:
             time.sleep(10000)
