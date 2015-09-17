@@ -38,7 +38,7 @@ def main():
     conn.start()
     conn.connect()
     conn.send(body='{"hostname":"%s"}' % hostname,destination='/queue/ems-%s-register' % queue_type)
-    conn.subscribe(destination='/queue/vnfm-%s-actions' % queue_type, id=1, ack='auto')
+    conn.subscribe(destination='/queue/vnfm-%s-actions' % hostname, id=1, ack='auto')
     try:
         while True:
             time.sleep(10000)
