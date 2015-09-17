@@ -49,12 +49,24 @@ class EMSReceiver(stomp.ConnectionListener):
                 err = ""
                 status = 0
         elif action == "EXECUTE":
+
             payload = SCRIPTS_PATH + "/" + payload
+
             log.debug("Executing: " + payload)
+
             proc = subprocess.Popen(["sh"] + payload.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             status = proc.wait()
 
             out, err = proc.communicate()
+
+        elif action == "RUN":
+            log.debug("Running: " + payload)
+            proc = subprocess.Popen(payload.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+            status = proc.wait()
+
+            out, err = proc.communicate()
+
         elif action == "CONFIGURATION_UPDATE":
             res = {}
             for k, v in payload.iteritems():
@@ -63,6 +75,7 @@ class EMSReceiver(stomp.ConnectionListener):
             out = res
             err = ""
             status = 0
+
 
         resp = {
             'output': out,
