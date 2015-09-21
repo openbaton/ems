@@ -91,7 +91,16 @@ class EMSReceiver(stomp.ConnectionListener):
             out = res
             err = ""
             status = 0
+        elif action == "WRITE_TO_FILE":
 
+            filename = dict_msg.get('filename')
+            log.debug("Writing to: " + filename + payload)
+            update_file = open(filename, 'a')
+            update_file.write(payload)
+            update_file.close()
+            status = 0
+            out = "written to file"
+            err = "Written to file"
 
         resp = {
             'output': out,

@@ -18,8 +18,14 @@
 
 sudo apt-get install -y python-pip
 
-sudo pip install -r requirements.txt
+
+sudo pip install GitPython==1.0.1
+sudo pip install gitdb==0.6.4
+sudo pip install smmap==0.9.0
+sudo pip install stomp.py==4.1.2
+sudo pip install wsgiref==0.1.2
+
 
 cd ..
 
-python ems-public
+sudo python /opt/ems-public
