@@ -7,27 +7,19 @@ _ems_base="${_base}/ems-public"
 _ems_config_file=/etc/opnbaton/ems/conf.ini
 
 function start {
-  sudo apt-get install -y python-pip
-
-
-  sudo pip install GitPython==1.0.1
-  sudo pip install gitdb==0.6.4
-  sudo pip install smmap==0.9.0
-  sudo pip install stomp.py==4.1.2
-  sudo pip install wsgiref==0.1.2
-  sudo python /opt/ems-public
+  sudo python /opt/ems-public/src
 }
 
 function stop {
-   sudo kill $(ps aux | grep 'python\ /opt/ems-public' | awk '{print $2}')
+   sudo kill $(ps aux | grep 'python\ /opt/ems-public/src' | awk '{print $2}')
 }
 
 function kill {
-    sudo kill $(ps aux | grep 'python\ /opt/ems-public' | awk '{print $2}')
+    sudo kill $(ps aux | grep 'python\ /opt/ems-public/src' | awk '{print $2}')
 }
 
 function end {
-    sudo kill $(ps aux | grep 'python\ /opt/ems-public' | awk '{print $2}')
+    sudo kill $(ps aux | grep 'python\ /opt/ems-public/src' | awk '{print $2}')
 }
 function usage {
     echo -e "EMS\n"
