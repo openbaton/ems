@@ -65,9 +65,11 @@ class EMSReceiver(stomp.ConnectionListener):
                 err = ""
                 status = 0
         elif action == "EXECUTE":
-
+            env_var = dict_msg.get('env')
             payload = SCRIPTS_PATH + "/" + payload
-
+            for key, value in env_var.iteritems():
+                os.environ[key] = value
+            print os.environ["ip"]
             log.debug("Executing: " + payload)
 
             proc = subprocess.Popen(["sh"] + payload.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
