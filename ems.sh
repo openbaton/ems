@@ -1,31 +1,63 @@
-
- # Copyright (c) 2015 Fraunhofer FOKUS. All rights reserved.
- #
- # Licensed under the Apache License, Version 2.0 (the "License");
- # you may not use this file except in compliance with the License.
- # You may obtain a copy of the License at
- #
- #     http://www.apache.org/licenses/LICENSE-2.0
- #
- # Unless required by applicable law or agreed to in writing, software
- # distributed under the License is distributed on an "AS IS" BASIS,
- # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- # See the License for the specific language governing permissions and
- # limitations under the License.
- #
+#!/bin/bash
 
 
-sudo apt-get install git
-sudo apt-get install -y python-pip
+
+_base=/opt
+_ems_base="${_base}/ems-public"
+_ems_config_file=/etc/opnbaton/ems/conf.ini
+
+function start {
+  sudo apt-get install -y python-pip
 
 
-sudo pip install GitPython==1.0.1
-sudo pip install gitdb==0.6.4
-sudo pip install smmap==0.9.0
-sudo pip install stomp.py==4.1.2
-sudo pip install wsgiref==0.1.2
+  sudo pip install GitPython==1.0.1
+  sudo pip install gitdb==0.6.4
+  sudo pip install smmap==0.9.0
+  sudo pip install stomp.py==4.1.2
+  sudo pip install wsgiref==0.1.2
+  sudo python /opt/ems-public
+}
+
+function stop {
+   sudo kill $(ps aux | grep 'python\ /opt/ems-public' | awk '{print $2}')
+}
+
+function kill {
+    sudo kill $(ps aux | grep 'python\ /opt/ems-public' | awk '{print $2}')
+}
+
+function end {
+    sudo kill $(ps aux | grep 'python\ /opt/ems-public' | awk '{print $2}')
+}
+function usage {
+    echo -e "EMS\n"
+    echo -e "Usage:\n\t ./ems.sh <option>\n\t"
+    echo -e "where option is"
+    echo -e "\t\t * start"
+    echo -e "\t\t * stop"
+    echo -e "\t\t * kill"
+}
 
 
-cd ..
 
-sudo python /opt/ems-public
+if [ $# -eq 0 ]
+   then
+        usage
+        exit 1
+fi
+
+declare -a cmds=($@)
+for (( i = 0; i <  ${#cmds[*]}; ++ i ))
+do
+    case ${cmds[$i]} in
+        "start" )
+            start ;;
+        "stop" )
+            stop ;;
+        "kill" )
+            kill ;;
+        * )
+            usage
+            end ;;
+    esac
+done
