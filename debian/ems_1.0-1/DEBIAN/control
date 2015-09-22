@@ -1,0 +1,8 @@
+Package: EMS
+Version: 1.0-1
+Section: base
+Priority: optional
+Architecture: i386
+Depends:
+Maintainer: openbaton
+Description: EMS ver 0.1
