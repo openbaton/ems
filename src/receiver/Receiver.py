@@ -1,19 +1,3 @@
-
- # Copyright (c) 2015 Fraunhofer FOKUS. All rights reserved.
- #
- # Licensed under the Apache License, Version 2.0 (the "License");
- # you may not use this file except in compliance with the License.
- # You may obtain a copy of the License at
- #
- #     http://www.apache.org/licenses/LICENSE-2.0
- #
- # Unless required by applicable law or agreed to in writing, software
- # distributed under the License is distributed on an "AS IS" BASIS,
- # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- # See the License for the specific language governing permissions and
- # limitations under the License.
- #
-
 import json
 import logging
 import subprocess
@@ -65,44 +49,37 @@ class EMSReceiver(stomp.ConnectionListener):
                 err = ""
                 status = 0
         elif action == "EXECUTE":
-            env_var = dict_msg.get('env')
+
             payload = SCRIPTS_PATH + "/" + payload
-            for key, value in env_var.iteritems():
-                os.environ[key] = value
-            print os.environ["ip"]
-            log.debug("Executing: " + payload)
+            env = dict_msg.get('env')
+            log.debug("Executing: %s with env %s" % (payload, env))
+            if env is None or len(env) == 0:
+                env = None
+            else:
+                env.update(os.environ)
 
-            proc = subprocess.Popen(["sh"] + payload.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            proc = subprocess.Popen(["sh"] + payload.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
             status = proc.wait()
 
             out, err = proc.communicate()
 
-        elif action == "RUN":
-            log.debug("Running: " + payload)
-            proc = subprocess.Popen(payload.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        elif action == "SCRIPTS_UPDATE":
+            url = payload
+            try:
+                Repo.pull(url, "/opt/openbaton/scripts/")
+            except GitCommandError as e:
+                err = traceback.format_exc()
+                status = e.status
+                out = None
+            else:
+                out = str(os.listdir(SCRIPTS_PATH))
+                err = ""
+                status = 0
 
-            status = proc.wait()
-
-            out, err = proc.communicate()
-
-        elif action == "CONFIGURATION_UPDATE":
-            res = {}
-            for k, v in payload.iteritems():
-                res[k] = str(self.configuration_manager.query(key=k))
-                log.debug("key = %s, value = %s" % (k, res[k]))
-            out = res
+        if out is None:
+            out = ""
+        if err is None:
             err = ""
-            status = 0
-        elif action == "WRITE_TO_FILE":
-
-            filename = dict_msg.get('filename')
-            log.debug("Writing to: " + filename + payload)
-            update_file = open(filename, 'a')
-            update_file.write(payload)
-            update_file.close()
-            status = 0
-            out = "written to file"
-            err = "Written to file"
 
         resp = {
             'output': out,
