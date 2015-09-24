@@ -47,14 +47,14 @@ def main():
     config.read(config_file_name) #read config file
     _map = get_map(section='ems', config=config) #get the data from map
     hostname = _map.get("hostname") #get the hostname
-    queue_type = _map.get("type")
-    hostname = _map.get("hostname")
-    conn = stomp.Connection(host_and_ports=[(_map.get("orch_ip"), int(_map.get("orch_port")))])
-    conn.set_listener('ems_receiver', EMSReceiver(conn=conn, hostname=hostname))
+    queue_type = _map.get("type") #get type of the queue
+    hostname = _map.get("hostname") #get hostname of the machine
+    conn = stomp.Connection(host_and_ports=[(_map.get("orch_ip"), int(_map.get("orch_port")))]) #connect to activemq server using STOMP
+    conn.set_listener('ems_receiver', EMSReceiver(conn=conn, hostname=hostname)) #use receiver object as listener
     conn.start()
     conn.connect()
-    conn.send(body='{"hostname":"%s"}' % hostname,destination='/queue/ems-%s-register' % queue_type)
-    conn.subscribe(destination='/queue/vnfm-%s-actions' % hostname, id=1, ack='auto')
+    conn.send(body='{"hostname":"%s"}' % hostname,destination='/queue/ems-%s-register' % queue_type) #send the registration message
+    conn.subscribe(destination='/queue/vnfm-%s-actions' % hostname, id=1, ack='auto') #start waiting for messages in the respective queue
     try:
         while True:
             time.sleep(10000)
