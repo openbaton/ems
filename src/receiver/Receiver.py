@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 import subprocess
@@ -34,6 +35,19 @@ class EMSReceiver(stomp.ConnectionListener):
         payload = dict_msg.get('payload')
 
         if action == 'SAVE_SCRIPTS':
+            if not os.path.exists(SCRIPTS_PATH):
+                os.makedirs(SCRIPTS_PATH)
+            name = dict_msg.get('name')
+            script = base64.b64decode(payload)
+            path_name = SCRIPTS_PATH + "/" + name
+            f = open(path_name, "w")
+            f.write(script)
+            log.info("Written %s into %s" % (script, path_name))
+            out = str(os.listdir(SCRIPTS_PATH))
+            err = ""
+            status = 0
+
+        if action == 'CLONE_SCRIPTS':
             if not os.path.exists(SCRIPTS_PATH):
                 os.makedirs(SCRIPTS_PATH)
             url = payload
