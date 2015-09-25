@@ -8,4 +8,3 @@ pip install stomp.py==4.1.2
 pip install wsgiref==0.1.2
 chmod 0755 /opt/ems-public/ems.sh
 chmod 0755 /etc/openbaton/ems/conf.ini
-update-rc.d ems.sh default
