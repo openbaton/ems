@@ -15,6 +15,7 @@
  #
 
 import argparse
+import os
 import sys
 import time
 import pkg_resources
@@ -63,15 +64,18 @@ def main():
 
 
 if __name__ == '__main__':
+    logging_dir='/var/log/openbaton/'
     parser = argparse.ArgumentParser(description='Template Module', usage=usage)
     parser.add_argument('-l', '--log-level',
                         help='possible values are [0, 1, 2, 3, 4] where 0 is the maximum and 4 is lowest')
 
+    if not os.path.exists(logging_dir):
+    	os.makedirs(logging_dir)
     if len(sys.argv) > 1:
         args = vars(parser.parse_args(sys.argv[1:]))
         log_level = args.get('log_level')
         level = LEVELS.get(log_level)
-        logging.basicConfig(filename='/var/log/openbaton/ems-receiver.log', level=level)
+        logging.basicConfig(filename=logging_dir+'/ems-receiver.log', level=level)
     else:
-        logging.basicConfig(filename='/var/log/openbaton/ems-receiver.log', level=logging.DEBUG)
+        logging.basicConfig(filename=logging_dir+'/ems-receiver.log', level=logging.DEBUG)
     main()
