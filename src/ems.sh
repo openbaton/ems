@@ -11,15 +11,15 @@ function start {
 }
 
 function stop {
-   sudo kill $(ps aux | grep 'python\ /opt/ems-public/src' | awk '{print $2}')
+   sudo kill $(ps aux | grep 'python\ /opt/openbaton/ems-public/src' | awk '{print $2}')
 }
 
 function kill {
-    sudo kill $(ps aux | grep 'python\ /opt/ems-public/src' | awk '{print $2}')
+    sudo kill $(ps aux | grep 'python\ /opt/openbaton/ems-public/src' | awk '{print $2}')
 }
 
 function end {
-    sudo kill $(ps aux | grep 'python\ /opt/ems-public/src' | awk '{print $2}')
+    sudo kill $(ps aux | grep 'python\ /opt/openbaton/ems-public/src' | awk '{print $2}')
 }
 function usage {
     echo -e "EMS\n"
