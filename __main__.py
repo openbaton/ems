@@ -46,7 +46,6 @@ def main():
     config = ConfigParser.ConfigParser() #create parser object
     config.read(config_file_name) #read config file
     _map = get_map(section='ems', config=config) #get the data from map
-    hostname = _map.get("hostname") #get the hostname
     queue_type = _map.get("type") #get type of the queue
     hostname = _map.get("hostname") #get hostname of the machine
     conn = stomp.Connection(host_and_ports=[(_map.get("orch_ip"), int(_map.get("orch_port")))]) #connect to activemq server using STOMP
@@ -72,7 +71,7 @@ if __name__ == '__main__':
         args = vars(parser.parse_args(sys.argv[1:]))
         log_level = args.get('log_level')
         level = LEVELS.get(log_level)
-        logging.basicConfig(level=level)
+        logging.basicConfig(filename='/var/log/openbaton/ems-receiver.log', level=level)
     else:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(filename='/var/log/openbaton/ems-receiver.log', level=logging.DEBUG)
     main()

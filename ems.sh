@@ -2,24 +2,24 @@
 
 
 
-_base=/opt
-_ems_base="${_base}/ems-public"
+_base=/opt/openbaton
+_ems_base="${_base}/ems"
 _ems_config_file=/etc/opnbaton/ems/conf.ini
 
 function start {
-  sudo python /opt/ems-public/src
+  sudo python $_ems_base
 }
 
 function stop {
-   sudo kill $(ps aux | grep 'python\ /opt/openbaton/ems-public/src' | awk '{print $2}')
+   sudo kill $(ps aux | grep 'python\ $_ems_base/src' | awk '{print $2}')
 }
 
 function kill {
-    sudo kill $(ps aux | grep 'python\ /opt/openbaton/ems-public/src' | awk '{print $2}')
+    sudo kill $(ps aux | grep 'python\ $_ems_base/src' | awk '{print $2}')
 }
 
 function end {
-    sudo kill $(ps aux | grep 'python\ /opt/openbaton/ems-public/src' | awk '{print $2}')
+    sudo kill $(ps aux | grep 'python\ $_ems_base/src' | awk '{print $2}')
 }
 function usage {
     echo -e "EMS\n"
