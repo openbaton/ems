@@ -1,4 +1,16 @@
 #!/bin/bash
 
-dpkg-deb --build ems_1.0-1
+function usage(){
+	echo usage: $0 version 
+}
+
+if [ $# -eq 0 ]
+   then
+        usage
+        exit 1
+fi
+
+version=$1
+
+dpkg-deb --build ems ems-$version.deb
 
