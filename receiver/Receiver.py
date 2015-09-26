@@ -72,7 +72,7 @@ class EMSReceiver(stomp.ConnectionListener):
             else:
                 env.update(os.environ)
 
-            proc = subprocess.Popen(["sh"] + payload.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+            proc = subprocess.Popen(["/bin/bash"] + payload.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
             status = proc.wait()
 
             out, err = proc.communicate()
