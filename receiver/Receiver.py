@@ -12,8 +12,8 @@ __author__ = 'lto'
 import stomp
 
 log = logging.getLogger(__name__)
-
-#SCRIPTS_PATH = "/opt/openbaton/scripts"
+#the environmental variable SCRIPTS_PATH is set everytime the script-path was contained in the json message, you can use after you cloned or saved the script
+SCRIPTS_PATH = "/opt/openbaton/scripts"
 
 
 class EMSReceiver(stomp.ConnectionListener):
@@ -40,11 +40,15 @@ class EMSReceiver(stomp.ConnectionListener):
                 os.makedirs(path)
             name = dict_msg.get('name')
             script = base64.b64decode(payload)
-            if path[-1] == "/":
-                path_name = path + "/" + name
+            if path == None:
+                path = SCRIPTS_PATH
             else:
-                path_name = path + name
+                if path[-1] == "/":
+                    path_name = path + "/" + name
+                else:
+                    path_name = path + name
             path_name = path + "/" + name
+            os.environ['SCRIPTS_PATH'] = path
             f = open(path_name, "w")
             f.write(script)
             log.info("Written %s into %s" % (script, path_name))
@@ -54,7 +58,10 @@ class EMSReceiver(stomp.ConnectionListener):
 
         if action == 'CLONE_SCRIPTS':
             path = dict_msg.get('script-path')
+            if path == None:
+                path = SCRIPTS_PATH
             url = payload
+            os.environ['SCRIPTS_PATH']=path
             log.debug("Cloning into: %s" % url)
             try:
                 Repo.clone_from(url, path)
@@ -75,6 +82,8 @@ class EMSReceiver(stomp.ConnectionListener):
                 env = None
             else:
                 env.update(os.environ)
+
+
 
             proc = subprocess.Popen(["/bin/bash"] + payload.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
             status = proc.wait()
