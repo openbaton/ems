@@ -13,7 +13,7 @@ import stomp
 
 log = logging.getLogger(__name__)
 
-SCRIPTS_PATH = "/opt/openbaton/scripts"
+#SCRIPTS_PATH = "/opt/openbaton/scripts"
 
 
 class EMSReceiver(stomp.ConnectionListener):
@@ -35,11 +35,16 @@ class EMSReceiver(stomp.ConnectionListener):
         payload = dict_msg.get('payload')
 
         if action == 'SAVE_SCRIPTS':
-            if not os.path.exists(SCRIPTS_PATH):
-                os.makedirs(SCRIPTS_PATH)
+            path = dict_msg.get('script-path')
+            if not os.path.exists(path):
+                os.makedirs(path)
             name = dict_msg.get('name')
             script = base64.b64decode(payload)
-            path_name = SCRIPTS_PATH + "/" + name
+            if path[-1] == "/":
+                path_name = path + "/" + name
+            else:
+                path_name = path + name
+            path_name = path + "/" + name
             f = open(path_name, "w")
             f.write(script)
             log.info("Written %s into %s" % (script, path_name))
@@ -48,18 +53,17 @@ class EMSReceiver(stomp.ConnectionListener):
             status = 0
 
         if action == 'CLONE_SCRIPTS':
-            if not os.path.exists(SCRIPTS_PATH):
-                os.makedirs(SCRIPTS_PATH)
+            path = dict_msg.get('script-path')
             url = payload
             log.debug("Cloning into: %s" % url)
             try:
-                Repo.clone_from(url, "/opt/openbaton/scripts/")
+                Repo.clone_from(url, path)
             except GitCommandError as e:
                 err = traceback.format_exc()
                 status = e.status
                 out = None
             else:
-                out = str(os.listdir(SCRIPTS_PATH))
+                out = str(os.listdir(path))
                 err = ""
                 status = 0
         elif action == "EXECUTE":
