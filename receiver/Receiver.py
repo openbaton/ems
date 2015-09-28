@@ -48,7 +48,7 @@ class EMSReceiver(stomp.ConnectionListener):
             f = open(path_name, "w")
             f.write(script)
             log.info("Written %s into %s" % (script, path_name))
-            out = str(os.listdir(SCRIPTS_PATH))
+            out = str(os.listdir(path))
             err = ""
             status = 0
 
