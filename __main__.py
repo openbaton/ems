@@ -55,6 +55,7 @@ def main():
     conn.connect()
     conn.send(body='{"hostname":"%s"}' % hostname,destination='/queue/ems-%s-register' % queue_type) #send the registration message
     conn.subscribe(destination='/queue/vnfm-%s-actions' % hostname, id=1, ack='auto') #start waiting for messages in the respective queue
+    print "EMS has connected to the destination queue"
     try:
         while True:
             time.sleep(10000)
