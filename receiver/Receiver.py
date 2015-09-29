@@ -47,7 +47,7 @@ class EMSReceiver(stomp.ConnectionListener):
                     path_name = path + "/" + name
                 else:
                     path_name = path + name
-            path_name = path + "/" + name
+          
             os.environ['SCRIPTS_PATH'] = path
             f = open(path_name, "w")
             f.write(script)
