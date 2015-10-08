@@ -51,8 +51,13 @@ def main():
     hostname = _map.get("hostname") #get hostname of the machine
     conn = stomp.Connection(host_and_ports=[(_map.get("orch_ip"), int(_map.get("orch_port")))]) #connect to activemq server using STOMP
     conn.set_listener('ems_receiver', EMSReceiver(conn=conn, hostname=hostname)) #use receiver object as listener
-    conn.start()
-    conn.connect()
+    while True:
+        try:
+            conn.start()
+            conn.connect()
+            break
+        except:
+            print "Cannot connect. Retrying"
     conn.send(body='{"hostname":"%s"}' % hostname,destination='/queue/ems-%s-register' % queue_type) #send the registration message
     conn.subscribe(destination='/queue/vnfm-%s-actions' % hostname, id=1, ack='auto') #start waiting for messages in the respective queue
     print "EMS has connected to the destination queue"
