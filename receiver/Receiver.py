@@ -13,7 +13,7 @@ import stomp
 
 log = logging.getLogger(__name__)
 #the environmental variable SCRIPTS_PATH is set everytime the script-path was contained in the json message, you can use after you cloned or saved the script
-SCRIPTS_PATH = "/opt/openbaton/scripts/"
+SCRIPTS_PATH = "/opt/openbaton/scripts"
 
 
 class EMSReceiver(stomp.ConnectionListener):
@@ -90,7 +90,10 @@ class EMSReceiver(stomp.ConnectionListener):
                 status = 0
         elif action == "EXECUTE":
 
-            payload = SCRIPTS_PATH + "/" + payload
+            if payload[-1] == "/":
+                payload = SCRIPTS_PATH + payload
+            else:
+                payload = SCRIPTS_PATH + "/" + payload
             env = dict_msg.get('env')
             log.debug("Executing: %s with env %s" % (payload, env))
             if env is None or len(env) == 0:
@@ -98,12 +101,12 @@ class EMSReceiver(stomp.ConnectionListener):
             else:
                 env.update(os.environ)
 
-
-
             proc = subprocess.Popen(["/bin/bash"] + payload.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
             status = proc.wait()
 
-            out, err = proc.communicate()
+            err, out = proc.communicate()
+            log.debug("Executed: ERR: %s OUT: %s", err,out )
+
 
         elif action == "SCRIPTS_UPDATE":
             url = payload
