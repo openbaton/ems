@@ -89,7 +89,6 @@ class EMSReceiver(stomp.ConnectionListener):
                 err = ""
                 status = 0
         elif action == "EXECUTE":
-
             if payload[-1] == "/":
                 payload = SCRIPTS_PATH + payload
             else:
@@ -100,12 +99,19 @@ class EMSReceiver(stomp.ConnectionListener):
                 env = None
             else:
                 env.update(os.environ)
+            ems_out_log = open('/var/log/openbaton/ems-out.log', "w+")
+            ems_err_log = open('/var/log/openbaton/ems-err.log', "w+")
 
-            proc = subprocess.Popen(["/bin/bash"] + payload.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
+            proc = subprocess.Popen(["/bin/bash"] + payload.split(), stdout=ems_out_log, stderr=ems_err_log, env=env)
             status = proc.wait()
+            ems_out_log.seek(0)
+            ems_err_log.seek(0)
+            out = ems_out_log.read()
+            err = ems_err_log.read()
 
-            err, out = proc.communicate()
-            log.debug("Executed: ERR: %s OUT: %s", err,out )
+            ems_out_log.close()
+            ems_err_log.close()
+            log.debug("Executed: ERR: %s OUT: %s", err, out)
 
 
         elif action == "SCRIPTS_UPDATE":
@@ -120,6 +126,9 @@ class EMSReceiver(stomp.ConnectionListener):
                 out = str(os.listdir(SCRIPTS_PATH))
                 err = ""
                 status = 0
+        else:
+            out = "No decernable action"
+            err = ""
 
         if out is None:
             out = ""
