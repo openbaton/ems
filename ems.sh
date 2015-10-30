@@ -4,7 +4,7 @@ _ems_base="${_base}/ems"
 _ems_config_file=/etc/openbaton/ems/conf.ini
 
 function start {
-  sudo apt-get install -y python-pip
+  
   sudo pip install -r requirements.txt
   sudo python $_ems_base
 }
