@@ -64,6 +64,10 @@ class EMSReceiver(stomp.ConnectionListener):
                 out = str(os.listdir(path))
                 err = ""
                 status = 0
+                st = os.stat(path)
+                os.chmod(path, st.st_mode | 0111)
+                st = os.stat(path_name)
+                os.chmod(path_name, st.st_mode | 0111)
             except TypeError: #catches typeerror in case of the message not being properly encoded
                 print "Incorrect script encoding"
                 action = None
@@ -126,9 +130,7 @@ class EMSReceiver(stomp.ConnectionListener):
                 out = str(os.listdir(SCRIPTS_PATH))
                 err = ""
                 status = 0
-        else:
-            out = "No decernable action"
-            err = ""
+
 
         if out is None:
             out = ""

@@ -58,10 +58,6 @@ def main():
             break
         except:
             print "Cannot connect. Retrying"
-            try:
-                time.sleep(5)
-            except KeyboardInterrupt:
-                sys.exit(0)
     conn.send(body='{"hostname":"%s"}' % hostname,destination='/queue/ems-%s-register' % queue_type) #send the registration message
     conn.subscribe(destination='/queue/vnfm-%s-actions' % hostname, id=1, ack='auto') #start waiting for messages in the respective queue
     print "EMS has connected to the destination queue"
