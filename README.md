@@ -12,11 +12,14 @@
 ### Usage
 
 sudo service ems start to start
+----
 sudo service ems stop to stop
+---
+sudo service ems restart to restart
 
 ### conf.ini
 
-Inside the folder etc there is a configuration file, conf.ini, where parameteres are stored
+Inside the folder /etc/openbaton/ems there is a configuration file, conf.ini, where parameteres are stored
 
 
 
