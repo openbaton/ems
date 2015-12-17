@@ -1,5 +1,4 @@
-
- # Copyright (c) 2015 Fraunhofer FOKUS. All rights reserved.
+# Copyright (c) 2015 Fraunhofer FOKUS. All rights reserved.
  #
  # Licensed under the Apache License, Version 2.0 (the "License");
  # you may not use this file except in compliance with the License.
@@ -14,66 +13,84 @@
  # limitations under the License.
  #
 
+
+
+#!/usr/bin/env python
 import argparse
+import threading
 import os
 import sys
 import time
 import pkg_resources
 import logging
-import stomp
 import ConfigParser
+import pika
+from receiver import on_message
+from utils import get_map
+__author__ = 'ogo'
 
-from receiver.Receiver import EMSReceiver
-from utils.Utils import get_map
-
-__author__ = 'lto'
 
 log = logging.getLogger(__name__)
-usage = "\nThis is the template module for the platform Crenation"
 
-LEVELS = {'0': logging.DEBUG,
-          '1': logging.INFO,
-          '2': logging.WARNING,
-          '3': logging.ERROR,
-          '4': logging.CRITICAL,
-          }
+
+def on_request(ch, method, props, body):
+    n = body
+    response = on_message(body)
+    ch.basic_publish(exchange='',
+                     routing_key=props.reply_to,
+                     properties=pika.BasicProperties(correlation_id = \
+                                                     props.correlation_id, content_type='text/plain'),
+                     body=str(response))
+    ch.basic_ack(delivery_tag = method.delivery_tag)
+def thread_function(ch, method, properties, body):
+        threading.Thread(target=on_request, args=(ch, method, properties, body)).start()
 
 
 def main():
-    # config_file_name = pkg_resources.resource_filename('etc', '/etc/openbaton/ems/conf.properties')
     config_file_name = "/etc/openbaton/ems/conf.ini"
-    # pass the name to debugger
     log.debug(config_file_name)
-    config = ConfigParser.ConfigParser() #create parser object
+    config = ConfigParser.ConfigParser()
     config.read(config_file_name) #read config file
     _map = get_map(section='ems', config=config) #get the data from map
     queue_type = _map.get("type") #get type of the queue
-    hostname = _map.get("hostname") #get hostname of the machine
-    conn = stomp.Connection(host_and_ports=[(_map.get("orch_ip"), int(_map.get("orch_port")))]) #connect to activemq server using STOMP
-    conn.set_listener('ems_receiver', EMSReceiver(conn=conn, hostname=hostname)) #use receiver object as listener
-    while True:
-        try:
-            conn.start()
-            conn.connect()
-            break
-        except:
-            print "Cannot connect. Retrying"
-    conn.send(body='{"hostname":"%s"}' % hostname,destination='/queue/ems-%s-register' % queue_type) #send the registration message
-    conn.subscribe(destination='/queue/vnfm-%s-actions' % hostname, id=1, ack='auto') #start waiting for messages in the respective queue
-    print "EMS has connected to the destination queue"
-    try:
-        while True:
-            time.sleep(10000)
-    except KeyboardInterrupt:
-        conn.disconnect()
-        sys.exit(0)
+    hostname = _map.get("hostname")
+    username = _map.get("username")
+    password = _map.get("password")
+    autodel = _map.get("autodelete")
+    heartbeat= _map.get("heartbeat")
+    exchange_name = _map.get("exchange")
+    queuedel = True
+    if autodel == 'false':
+        queuedel = False
+    if not heartbeat:
+        heartbeat = '60'
+    if not exchange_name:
+	exchange_name = 'openbaton-exchange'
 
+
+
+
+    rabbit_credentials = pika.PlainCredentials(username,password)
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=_map.get("orch_ip"), credentials = rabbit_credentials, heartbeat_interval=int(heartbeat)))
+
+    channel = connection.channel()
+
+
+    channel.exchange_declare(exchange=exchange_name, type="topic", durable=True)
+    channel.queue_declare(queue='ems.%s.register'%queue_type, auto_delete=queuedel)
+    channel.queue_declare(queue='vnfm.%s.actions'%hostname, auto_delete=queuedel)
+    channel.queue_bind(exchange=exchange_name, queue='ems.%s.register'%queue_type)
+    channel.queue_bind(exchange=exchange_name, queue='vnfm.%s.actions'%hostname)
+    channel.basic_publish(exchange='',routing_key='ems.generic.register',properties=pika.BasicProperties(content_type='text/plain'), body='{"hostname":"%s"}' % hostname)
+
+    channel.basic_qos(prefetch_count=1)
+    channel.basic_consume(thread_function, queue='vnfm.%s.actions'%hostname)
+    print "Waiting for actions"
+    channel.start_consuming()
 
 if __name__ == '__main__':
     logging_dir='/var/log/openbaton/'
-    parser = argparse.ArgumentParser(description='Template Module', usage=usage)
-    parser.add_argument('-l', '--log-level',
-                        help='possible values are [0, 1, 2, 3, 4] where 0 is the maximum and 4 is lowest')
+
 
     if not os.path.exists(logging_dir):
     	os.makedirs(logging_dir)

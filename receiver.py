@@ -1,33 +1,42 @@
+# Copyright (c) 2015 Fraunhofer FOKUS. All rights reserved.
+ #
+ # Licensed under the Apache License, Version 2.0 (the "License");
+ # you may not use this file except in compliance with the License.
+ # You may obtain a copy of the License at
+ #
+ #     http://www.apache.org/licenses/LICENSE-2.0
+ #
+ # Unless required by applicable law or agreed to in writing, software
+ # distributed under the License is distributed on an "AS IS" BASIS,
+ # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ #
+
+
+
+
+
 import base64
 import json
 import logging
 import subprocess
 import traceback
-from core.Managers import ConfigurationManager
 from git import Repo, GitCommandError
 import os
 
 __author__ = 'lto,ogo'
 
-import stomp
+
 
 log = logging.getLogger(__name__)
 #the environmental variable SCRIPTS_PATH is set everytime the script-path was contained in the json message, you can use after you cloned or saved the script
 SCRIPTS_PATH = "/opt/openbaton/scripts"
 
 
-class EMSReceiver(stomp.ConnectionListener):
-    def __init__(self, conn, hostname="generic"):
-        self.conn = conn
-        self.hostname = hostname
-        self.configuration_manager = ConfigurationManager()
+def on_message(message):
 
-    def on_error(self, headers, message):
-        log.info('received an error %s' % message)
-
-    def on_message(self, headers, message):
-
-        log.info('received a message: %s' % message)
+        #log.info('received a message: %s' % message)
         try:
             dict_msg = json.loads(message)
 
@@ -64,6 +73,10 @@ class EMSReceiver(stomp.ConnectionListener):
                 out = str(os.listdir(path))
                 err = ""
                 status = 0
+                st = os.stat(path)
+                os.chmod(path, st.st_mode | 0111)
+                st = os.stat(path_name)
+                os.chmod(path_name, st.st_mode | 0111)
             except TypeError: #catches typeerror in case of the message not being properly encoded
                 print "Incorrect script encoding"
                 action = None
@@ -80,7 +93,10 @@ class EMSReceiver(stomp.ConnectionListener):
             log.debug("Cloning into: %s" % url)
             try:
                 Repo.clone_from(url, path)
+                print 'Cloned'
+                log.debug('Cloned')
             except GitCommandError as e:
+                print 'Encountered error'
                 err = traceback.format_exc()
                 status = e.status
                 out = None
@@ -126,7 +142,7 @@ class EMSReceiver(stomp.ConnectionListener):
                 out = str(os.listdir(SCRIPTS_PATH))
                 err = ""
                 status = 0
-      
+
 
         if out is None:
             out = ""
@@ -140,5 +156,4 @@ class EMSReceiver(stomp.ConnectionListener):
         }
         json_str = json.dumps(resp)
         log.info("answer is: " + json_str)
-
-        self.conn.send(body=json_str, destination='/queue/%s-vnfm-actions' % self.hostname)
+        return json_str
