@@ -11,11 +11,7 @@
 
 ### Usage
 
-sudo service ems start to start
-
-sudo service ems stop to stop
-
-sudo service ems restart to restart
+sudo python __main__.py
 
 ### conf.ini
 
