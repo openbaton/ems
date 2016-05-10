@@ -42,11 +42,18 @@ def on_request(ch, method, props, body):
                                                      props.correlation_id, content_type='text/plain'),
                      body=str(response))
     ch.basic_ack(delivery_tag = method.delivery_tag)
+    log.info("Answer sent")
 def thread_function(ch, method, properties, body):
         threading.Thread(target=on_request, args=(ch, method, properties, body)).start()
 
-
 def main():
+    logging_dir='/var/log/openbaton/'
+
+
+    if not os.path.exists(logging_dir):
+        os.makedirs(logging_dir)
+
+    logging.basicConfig(filename=logging_dir+'/ems-receiver.log', level=logging.INFO)
     config_file_name = "/etc/openbaton/ems/conf.ini"
     log.debug(config_file_name)
     config = ConfigParser.ConfigParser()
@@ -66,6 +73,7 @@ def main():
         heartbeat = '60'
     if not exchange_name:
 	exchange_name = 'openbaton-exchange'
+    log.info("EMS configuration paramters are hostname: %s, username: %s, password %s, autodel: %s, heartbeat: %s, exchange name: %s" % (hostname, username, password, autodel, heartbeat, exchange_name))
 
 
 
@@ -77,7 +85,7 @@ def main():
 
 
     channel.exchange_declare(exchange=exchange_name, type="topic", durable=True)
-    channel.queue_declare(queue='ems.%s.register'%queue_type, auto_delete=queuedel)
+    #channel.queue_declare(queue='ems.%s.register'%queue_type, auto_delete=queuedel)
     channel.queue_declare(queue='vnfm.%s.actions'%hostname, auto_delete=queuedel)
     channel.queue_bind(exchange=exchange_name, queue='ems.%s.register'%queue_type)
     channel.queue_bind(exchange=exchange_name, queue='vnfm.%s.actions'%hostname)
@@ -93,12 +101,7 @@ if __name__ == '__main__':
 
 
     if not os.path.exists(logging_dir):
-    	os.makedirs(logging_dir)
-    if len(sys.argv) > 1:
-        args = vars(parser.parse_args(sys.argv[1:]))
-        log_level = args.get('log_level')
-        level = LEVELS.get(log_level)
-        logging.basicConfig(filename=logging_dir+'/ems-receiver.log', level=level)
-    else:
-        logging.basicConfig(filename=logging_dir+'/ems-receiver.log', level=logging.DEBUG)
+        os.makedirs(logging_dir)
+
+        logging.basicConfig(filename=logging_dir+'/ems-receiver.log', level=logging.INFO)
     main()
