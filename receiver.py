@@ -127,8 +127,11 @@ def on_message(message):
                 env.update(os.environ)
             ems_out_log = open('/var/log/openbaton/ems-out.log', "w+")
             ems_err_log = open('/var/log/openbaton/ems-err.log', "w+")
+            if ('.py' in payload):
+                proc = subprocess.Popen(["python"] + payload.split(), stdout=ems_out_log, stderr=ems_err_log, env=env)
+            else:
+                proc = subprocess.Popen(["/bin/bash"] + payload.split(), stdout=ems_out_log, stderr=ems_err_log, env=env)
 
-            proc = subprocess.Popen(["/bin/bash"] + payload.split(), stdout=ems_out_log, stderr=ems_err_log, env=env)
             status = proc.wait()
             ems_out_log.seek(0)
             ems_err_log.seek(0)
