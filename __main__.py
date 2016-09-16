@@ -79,7 +79,7 @@ def main():
 
 
     rabbit_credentials = pika.PlainCredentials(username,password)
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=_map.get("orch_ip"), port=int(_map.get("orch_port")), credentials = rabbit_credentials, heartbeat_interval=int(heartbeat)))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=_map.get("orch_ip"), credentials = rabbit_credentials, heartbeat_interval=int(heartbeat)))
 
     channel = connection.channel()
 
