@@ -27,6 +27,7 @@ import ConfigParser
 import pika
 from receiver import on_message
 from utils import get_map
+
 __author__ = 'ogo'
 
 
@@ -43,12 +44,14 @@ def on_request(ch, method, props, body):
                      body=str(response))
     ch.basic_ack(delivery_tag = method.delivery_tag)
     log.info("Answer sent")
+
+
 def thread_function(ch, method, properties, body):
         threading.Thread(target=on_request, args=(ch, method, properties, body)).start()
 
+
 def main():
     logging_dir='/var/log/openbaton/'
-
 
     if not os.path.exists(logging_dir):
         os.makedirs(logging_dir)
@@ -64,7 +67,8 @@ def main():
     username = _map.get("username")
     password = _map.get("password")
     autodel = _map.get("autodelete")
-    heartbeat= _map.get("heartbeat")
+    heartbeat = _map.get("heartbeat")
+    broker_port = _map.get("broker_port")
     exchange_name = _map.get("exchange")
     queuedel = True
     if autodel == 'false':
@@ -73,16 +77,14 @@ def main():
         heartbeat = '60'
     if not exchange_name:
 	exchange_name = 'openbaton-exchange'
-    log.info("EMS configuration paramters are hostname: %s, username: %s, password %s, autodel: %s, heartbeat: %s, exchange name: %s" % (hostname, username, password, autodel, heartbeat, exchange_name))
-
-
-
+    if not broker_port:
+	broker_port = "5672"
+    log.info("EMS configuration paramters are hostname: %s, username: %s, password: *****, autodel: %s, heartbeat: %s, exchange name: %s" % (hostname, username, autodel, heartbeat, exchange_name))
 
     rabbit_credentials = pika.PlainCredentials(username,password)
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=_map.get("orch_ip"), port=int(_map.get("orch_port")), credentials = rabbit_credentials, heartbeat_interval=int(heartbeat)))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=_map.get("broker_ip"), port=int(broker_port), credentials = rabbit_credentials, heartbeat_interval=int(heartbeat)))
 
     channel = connection.channel()
-
 
     channel.exchange_declare(exchange=exchange_name, type="topic", durable=True)
     #channel.queue_declare(queue='ems.%s.register'%queue_type, auto_delete=queuedel)
@@ -96,9 +98,9 @@ def main():
     print "Waiting for actions"
     channel.start_consuming()
 
+
 if __name__ == '__main__':
     logging_dir='/var/log/openbaton/'
-
 
     if not os.path.exists(logging_dir):
         os.makedirs(logging_dir)
