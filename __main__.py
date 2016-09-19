@@ -65,7 +65,7 @@ def main():
     password = _map.get("password")
     autodel = _map.get("autodelete")
     heartbeat = _map.get("heartbeat")
-    broker_port = _map.get("orch_port")
+    broker_port = _map.get("broker_port")
     exchange_name = _map.get("exchange")
     queuedel = True
     if autodel == 'false':
@@ -82,7 +82,7 @@ def main():
 
 
     rabbit_credentials = pika.PlainCredentials(username,password)
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=_map.get("orch_ip"), port=int(broker_port), credentials = rabbit_credentials, heartbeat_interval=int(heartbeat)))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host=_map.get("broker_ip"), port=int(broker_port), credentials = rabbit_credentials, heartbeat_interval=int(heartbeat)))
 
     channel = connection.channel()
 
