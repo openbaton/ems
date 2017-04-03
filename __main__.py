@@ -44,7 +44,7 @@ def thread_function(ch, method, properties, body):
 
 def main():
     sleep_time = 1
-    #ogging_dir='/var/log/openbaton/'
+    logging_dir='/var/log/openbaton/'
     #logging_dir = 'log/openbaton/'
     if not os.path.exists(logging_dir):
         os.makedirs(logging_dir)
@@ -102,7 +102,7 @@ def main():
                 sleep_time = sleep_time + 1
             else:
                 sleep_time = sleep_time + 10
-            print("Trying to reconnect")
+            #print("Trying to reconnect")
             # log.info("Trying to reconnect...")
 
 
