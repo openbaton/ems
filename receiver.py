@@ -32,6 +32,141 @@ logging_dir = '/var/log/openbaton/'
 # the environmental variable SCRIPTS_PATH is set everytime the script-path was contained in the json message, you can use after you cloned or saved the script
 scripts_path = "/opt/openbaton/scripts"
 
+def save_scripts(dict_msg):
+    log.info("Recevied save scripts command")
+    payload = dict_msg.get('payload')
+    path = dict_msg.get('script-path')
+    try:
+        script = base64.b64decode(payload)
+
+        if path is None:
+            log.info("No path provided, saving into default directory")
+            print "No path provided, saving into default directory"
+            path = scripts_path
+        if not os.path.exists(path):
+            os.makedirs(path)
+        name = dict_msg.get('name')
+        if path[-1] == "/":
+            path_name = path + name
+        else:
+            path_name = path + "/" + name
+        os.environ['SCRIPTS_PATH'] = path
+        f = open(path_name, "w")
+        f.write(script)
+        # log.info("Written %s into %s" % (script, path_name))
+        out = str(os.listdir(path))
+        err = ""
+        status = 0
+        st = os.stat(path)
+        os.chmod(path, st.st_mode | 0111)
+        st = os.stat(path_name)
+        os.chmod(path_name, st.st_mode | 0111)
+    except TypeError:  # catches typeerror in case of the message not being properly encoded
+        print "Incorrect script encoding"
+        action = None
+        out = None
+        err = "Incorrect script encoding"
+        status = "1"
+    return generate_response(out=out, err=err, status=status)
+
+
+def clone_scripts(dict_msg):
+    payload = dict_msg.get('payload')
+    path = dict_msg.get('script-path')
+    if path is None:
+        path = scripts_path
+    url = payload
+    os.environ['SCRIPTS_PATH'] = path
+    log.info("Cloning from: %s into %s" % (url, path))
+    try:
+        Repo.clone_from(url, path)
+        print 'Cloned'
+        log.debug('Cloned')
+        out = str(os.listdir(path))
+        err = ""
+        status = 0
+    except GitCommandError as e:
+        log.info("Encountered error while cloning")
+        print 'Encountered error'
+        err = traceback.format_exc()
+        status = e.status
+        out = None
+    return generate_response(out=out, err=err, status=status)
+
+
+def execute(dict_msg):
+    log.info("Received execute command")
+    payload = dict_msg.get('payload')
+    if payload[-1] == "/":
+        payload = scripts_path + payload
+    else:
+        payload = scripts_path + "/" + payload
+    env = dict_msg.get('env')
+    log.info("Executing: %s with env %s" % (payload, env))
+    if env is None or len(env) == 0:
+        env = None
+    else:
+        env.update(os.environ)
+    ems_out_log = open('/var/log/openbaton/ems-out.log', "w+")
+    ems_err_log = open('/var/log/openbaton/ems-err.log', "w+")
+    if '.py' in payload:
+        proc = subprocess.Popen(["python"] + payload.split(), stdout=ems_out_log, stderr=ems_err_log, env=env)
+    else:
+        proc = subprocess.Popen(["/bin/bash"] + payload.split(), stdout=ems_out_log, stderr=ems_err_log, env=env)
+
+    status = proc.wait()
+    ems_out_log.seek(0)
+    ems_err_log.seek(0)
+    out = ems_out_log.read()
+    err = ems_err_log.read()
+
+    ems_out_log.close()
+    ems_err_log.close()
+    log.info("Executed: ERR: %s OUT: %s", err, out)
+    return generate_response(out=out, err=err, status=status)
+
+
+def repos_scripts_update(dict_msg):
+    log.info("Updating scripts")
+    payload = dict_msg.get('payload')
+    url = payload
+    try:
+        Repo.pull(url, "/opt/openbaton/scripts/")
+        log.info("Updated")
+    except GitCommandError as e:
+        log.info("Encountered error while updatign scripts")
+        err = traceback.format_exc()
+        status = e.status
+        out = None
+        return generate_response(out=out, err=err, status=status)
+    else:
+        out = str(os.listdir(scripts_path))
+        err = ""
+        status = 0
+    return generate_response(out=out, err=err, status=status)
+
+
+def scripts_update(dict_msg):
+    log.info("Updating scripts")
+    script_name = dict_msg.get('name')
+    script_payload = base64.b64decode(payload)
+    try:
+        f = open(scripts_path + "/" + script_name, "w")
+        f.write(script_payload)
+        f.close()
+        log.info("Updated file %s" % script_name)
+    except GitCommandError as e:
+        log.info("Encountered error while updating scripts")
+        err = traceback.format_exc()
+        status = e.status
+        out = None
+        return generate_response(out=out, err=err, status=status)
+    else:
+        out = str(os.listdir(scripts_path))
+        err = ""
+        status = 0
+        return generate_response(out=out, err=err, status=status)
+
 
 def on_message(message):
     logging.basicConfig(filename=logging_dir + '/ems-receiver.log', level=logging.INFO)
@@ -54,132 +189,22 @@ def on_message(message):
         err = "Not a json message"
         status = "1"
     if action == 'SAVE_SCRIPTS':
-        log.info("Recevied save scripts command")
-        path = dict_msg.get('script-path')
-        try:
-            script = base64.b64decode(payload)
-
-            if path is None:
-                log.info("No path provided, saving into default directory")
-                print "No path provided, saving into default directory"
-                path = scripts_path
-            if not os.path.exists(path):
-                os.makedirs(path)
-            name = dict_msg.get('name')
-
-            if path[-1] == "/":
-                path_name = path + name
-            else:
-                path_name = path + "/" + name
-
-            os.environ['SCRIPTS_PATH'] = path
-            f = open(path_name, "w")
-            f.write(script)
-            #log.info("Written %s into %s" % (script, path_name))
-            out = str(os.listdir(path))
-            err = ""
-            status = 0
-            st = os.stat(path)
-            os.chmod(path, st.st_mode | 0111)
-            st = os.stat(path_name)
-            os.chmod(path_name, st.st_mode | 0111)
-        except TypeError:  # catches typeerror in case of the message not being properly encoded
-            print "Incorrect script encoding"
-            action = None
-            out = None
-            err = "Incorrect script encoding"
-            status = "1"
-
+       return save_scripts(dict_msg=dict_msg)
     if action == 'CLONE_SCRIPTS':
-        path = dict_msg.get('script-path')
-        if path is None:
-            path = scripts_path
-        url = payload
-        os.environ['SCRIPTS_PATH'] = path
-        log.info("Cloning from: %s into %s" % (url, path))
-        try:
-            Repo.clone_from(url, path)
-            print 'Cloned'
-            log.debug('Cloned')
-        except GitCommandError as e:
-            log.info("Encountered error while cloning")
-            print 'Encountered error'
-            err = traceback.format_exc()
-            status = e.status
-            out = None
-        else:
-            out = str(os.listdir(path))
-            err = ""
-            status = 0
+        return clone_scripts(dict_msg)
     elif action == "EXECUTE":
-        log.info("Received execute command")
-        if payload[-1] == "/":
-            payload = scripts_path + payload
-        else:
-            payload = scripts_path + "/" + payload
-        env = dict_msg.get('env')
-        log.info("Executing: %s with env %s" % (payload, env))
-        if env is None or len(env) == 0:
-            env = None
-        else:
-            env.update(os.environ)
-        ems_out_log = open('/var/log/openbaton/ems-out.log', "w+")
-        ems_err_log = open('/var/log/openbaton/ems-err.log', "w+")
-        if '.py' in payload:
-            proc = subprocess.Popen(["python"] + payload.split(), stdout=ems_out_log, stderr=ems_err_log, env=env)
-        else:
-            proc = subprocess.Popen(["/bin/bash"] + payload.split(), stdout=ems_out_log, stderr=ems_err_log, env=env)
-
-        status = proc.wait()
-        ems_out_log.seek(0)
-        ems_err_log.seek(0)
-        out = ems_out_log.read()
-        err = ems_err_log.read()
-
-        ems_out_log.close()
-        ems_err_log.close()
-        log.info("Executed: ERR: %s OUT: %s", err, out)
-
+        return execute(dict_msg)
     elif action == "REPO_SCRIPTS_UPDATE":
-        log.info("Updating scripts")
-        url = payload
-        try:
-            Repo.pull(url, "/opt/openbaton/scripts/")
-            log.info("Updated")
-        except GitCommandError as e:
-            log.info("Encountered error while updatign scripts")
-            err = traceback.format_exc()
-            status = e.status
-            out = None
-        else:
-            out = str(os.listdir(scripts_path))
-            err = ""
-            status = 0
-
+        return repos_scripts_update(dict_msg)
     elif action == "SCRIPTS_UPDATE":
-        log.info("Updating scripts")
-        script_name = dict_msg.get('name') 
-        script_payload = base64.b64decode(payload)
-        try:
-            f = open(scripts_path + "/" + script_name, "w")
-            f.write(script_payload)
-            f.close()
-            log.info("Updated file %s" % script_name)
-        except GitCommandError as e:
-            log.info("Encountered error while updating scripts")
-            err = traceback.format_exc()
-            status = e.status
-            out = None
-        else:
-            out = str(os.listdir(scripts_path))
-            err = ""
-            status = 0
+       return scripts_update(dict_msg)
 
+
+def generate_response(out, err, status):
     if out is None:
         out = ""
     if err is None:
         err = ""
-
     resp = {
         'output': out,
         'err': err,
