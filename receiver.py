@@ -75,7 +75,7 @@ def on_message(message):
             os.environ['SCRIPTS_PATH'] = path
             f = open(path_name, "w")
             f.write(script)
-            log.info("Written %s into %s" % (script, path_name))
+            #log.info("Written %s into %s" % (script, path_name))
             out = str(os.listdir(path))
             err = ""
             status = 0

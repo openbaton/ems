@@ -91,7 +91,7 @@ def main():
     channel.queue_declare(queue='vnfm.%s.actions'%hostname, auto_delete=queuedel)
     channel.queue_bind(exchange=exchange_name, queue='ems.%s.register'%queue_type)
     channel.queue_bind(exchange=exchange_name, queue='vnfm.%s.actions'%hostname)
-    channel.basic_publish(exchange='',routing_key='ems.generic.register',properties=pika.BasicProperties(content_type='text/plain'), body='{"hostname":"%s"}' % hostname)
+    channel.basic_publish(exchange='',routing_key='ems.%s.register'%queue_type,properties=pika.BasicProperties(content_type='text/plain'), body='{"hostname":"%s"}' % hostname)
 
     channel.basic_qos(prefetch_count=1)
     channel.basic_consume(thread_function, queue='vnfm.%s.actions'%hostname)
