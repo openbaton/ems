@@ -62,6 +62,7 @@ def main():
     heartbeat = _map.get("heartbeat")
     broker_port = _map.get("broker_port")
     exchange_name = _map.get("exchange")
+    virtual_host = _map.get("virtual_host")
     queuedel = True
     if autodel == 'false':
         queuedel = False
@@ -71,6 +72,10 @@ def main():
         exchange_name = 'openbaton-exchange'
     if not broker_port:
         broker_port = "5672"
+    if not virtual_host: 
+        virtual_host = "/"
+    if not queue_type:
+        queue_type = "generic"
     log.info(
         "EMS configuration paramters are "
         "hostname: %s, username: %s, password: *****, autodel: %s, heartbeat: %s, exchange name: %s" % (
@@ -80,7 +85,7 @@ def main():
         try:
             connection = pika.BlockingConnection(
                 pika.ConnectionParameters(host=_map.get("broker_ip"), port=int(broker_port),
-                                          credentials=rabbit_credentials, heartbeat_interval=int(heartbeat)))
+                                          virtual_host=virtual_host, credentials=rabbit_credentials, heartbeat_interval=int(heartbeat)))
             channel = connection.channel()
             channel.exchange_declare(exchange=exchange_name, type="topic", durable=True)
             # channel.queue_declare(queue='ems.%s.register'%queue_type, auto_delete=queuedel)
