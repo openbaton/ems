@@ -81,7 +81,10 @@ def clone_scripts(dict_msg):
     try:
         Repo.clone_from(url, path)
         print 'Cloned'
-        log.debug('Cloned')
+        log.info('Cloned')
+        for file in os.listdir(path):
+            st = os.stat(path + "/" + file)
+            os.chmod(path + "/" + file, st.st_mode | 0111)
         out = str(os.listdir(path))
         err = ""
         status = 0
@@ -110,7 +113,7 @@ def execute(dict_msg):
     ems_out_log = open('/var/log/openbaton/ems-out.log', "w+")
     ems_err_log = open('/var/log/openbaton/ems-err.log', "w+")
     if '.py' in payload:
-        proc = subprocess.Popen(["python"] + payload.split(), stdout=ems_out_log, stderr=ems_err_log, env=env)
+        proc = subprocess.Popen(payload.split(), stdout=ems_out_log, stderr=ems_err_log, env=env)
     else:
         proc = subprocess.Popen(["/bin/bash"] + payload.split(), stdout=ems_out_log, stderr=ems_err_log, env=env)
 
