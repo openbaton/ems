@@ -111,5 +111,3 @@ def main():
             # log.info("Trying to reconnect...")
 
 
-if __name__ == '__main__':
-    main()
