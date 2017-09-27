@@ -87,8 +87,8 @@ def main():
                 pika.ConnectionParameters(host=_map.get("broker_ip"), port=int(broker_port),
                                           virtual_host=virtual_host, credentials=rabbit_credentials, heartbeat_interval=int(heartbeat)))
             channel = connection.channel()
-            channel.exchange_declare(exchange=exchange_name, type="topic", durable=True)
-            # channel.queue_declare(queue='ems.%s.register'%queue_type, auto_delete=queuedel)
+            #channel.exchange_declare(exchange=exchange_name, type="topic", durable=True)
+            #channel.queue_declare(queue='ems.%s.register'%queue_type, auto_delete=queuedel)
             channel.queue_bind(exchange=exchange_name, queue='ems.%s.register' % queue_type)
             channel.queue_declare(queue='vnfm.%s.actions' % hostname, auto_delete=queuedel)
             channel.queue_bind(exchange=exchange_name, queue='ems.%s.register' % queue_type)
