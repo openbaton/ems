@@ -37,7 +37,7 @@ For starting EMS
 
 .. code:: bash
 
-openbaton-ems
+              openbaton-ems
 
 Issue tracker
 -------------
