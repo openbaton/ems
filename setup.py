@@ -1,8 +1,8 @@
 import os
+import shutil
+import subprocess
 
-from setuptools import setup, find_packages
-
-
+from setuptools import setup
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
@@ -28,6 +28,6 @@ setup(
         'console_scripts': [
             'openbaton-ems = ems.ems:main'
         ]
-    }
-
+    },
+    data_files=[("/etc/init.d", ["openbaton-ems"])]
 )
