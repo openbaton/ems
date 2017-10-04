@@ -1,9 +1,8 @@
-  Open Baton Element Management System for Generic VNFM
-  ====================================
+Open Baton Element Management System for Generic VNFM
+====================================
   
 This project contains the sources of the Open Baton Element Management System (EMS). The EMS is an AMQP producer/consumer running as an agent inside the deployed VMs for executing the lifecycle events received from the Generic VNFM. After the EMS starts, it connects to the RabbitMQ server, subscribes to the queue with its name and sends register message to the specific register-queue attending further commands from the VNFM.
 EMS receives requests like clone scripts from specific git repositories, update them and execute with the arguments that were sent within the message.
-
 
 Technical Requirements
 ----------------------
@@ -36,6 +35,7 @@ How to use EMS
 
 For starting EMS
 .. code:: bash
+
 openbaton-ems
 
 Issue tracker
