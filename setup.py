@@ -1,13 +1,12 @@
 import os
-import shutil
-import subprocess
+
 
 from setuptools import setup
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(
-    name="openbaton-ems",
+    name="openbaton-generic-ems4",
     version="1.0.0",
     author="Openbaton",
     author_email="dev@openbaton.org",
@@ -24,10 +23,11 @@ setup(
         "Topic :: Software Development",
         "License :: OSI Approved :: Apache Software License"
     ],
+    scripts = ["add-upstart-ems"],
     entry_points={
         'console_scripts': [
             'openbaton-ems = ems.ems:main'
         ]
     },
-    data_files=[("/etc/init.d", ["openbaton-ems"])]
+    data_files=[("/opt/openbaton/ems/upstart", ["etc/openbaton/init.d/openbaton-ems-debian", "etc/openbaton/init.d/centos-upstart"]),]
 )
