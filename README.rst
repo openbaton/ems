@@ -27,6 +27,7 @@ The EMS is typically installed by the Generic VNFM. Those are the commands execu
             apt-get install -y git
             mkdir /opt/openbaton
             pip install openbaton-ems
+            add-upstart-ems
             
 After the installation make sure you configure the conf.ini file correctly: /etc/openbaton/ems/conf.ini
 
@@ -38,6 +39,12 @@ For starting EMS
 .. code:: bash
 
               openbaton-ems
+         
+For adding EMS to upstart job and services list. Currently works on Ubuntu and Centos 7
+
+.. code:: bash
+
+              add-upstart-ems
 
 Issue tracker
 -------------
