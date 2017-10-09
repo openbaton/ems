@@ -1,0 +1,36 @@
+#!/bin/sh
+DIR=/opt/openbaton/ems
+PROG="/usr/bin/python"
+ARG="/usr/local/bin/openbaton-ems"
+
+DAEMON_USER=root
+
+PIDFILE=/var/run/ems.pid
+. /lib/lsb/init-functions
+
+do_start() {
+	log_daemon_msg "Starting EMS"
+	start-stop-daemon --start --background --pidfile $PIDFILE --make-pidfile --user $DAEMON_USER --chuid $DAEMON_USER --exec "$PROG" -- $ARG
+}
+do_stop() {
+	log_daemon_msg "Stopping EMS"
+	start-stop-daemon --stop --pidfile $PIDFILE
+}
+
+do_restart() {
+	log_daemon_msg "Restarting EMS"
+	do_stop
+	do_start
+}
+
+    case "$1" in
+        "start" )
+            do_start ;;
+        "stop" )
+            do_stop ;;
+
+	"restart" )
+  	    do_restart;;
+	* )
+            usage;;
+    esac

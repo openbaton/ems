@@ -1,0 +1,35 @@
+#!/bin/sh
+
+install_ems_on_ubuntu () {
+     cp /opt/openbaton/ems/upstart/openbaton-ems-debian /etc/init.d/openbaton-ems
+     chmod +x /etc/init.d/openbaton-ems
+     update-rc.d openbaton-ems defaults
+}
+
+install_ems_on_centos () {
+    cp /usr/lib/python2.7/site-packages/opt/openbaton/ems/upstart/centos-upstart /usr/lib/systemd/system/openbaton-ems.service
+    systemctl daemon-reload
+    systemctl enable openbaton-ems
+
+}
+
+if [ $(cat /etc/os-release | grep -i "ubuntu" | wc -l) -gt 0 ]; then
+    os=ubuntu
+elif [ $(cat /etc/os-release | grep -i "centos" | wc -l) -gt 0 ]; then
+    os=centos
+else
+    os=undefined
+fi
+
+case ${os} in
+    ubuntu)
+	    install_ems_on_ubuntu
+	    ;;
+    centos)
+        install_ems_on_centos
+	    ;;
+    *)
+	    echo "OS not recognized"
+	    exit 1
+	    ;;
+esac
