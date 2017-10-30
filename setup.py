@@ -6,7 +6,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(
-    name="openbaton-ems",
+    name="openbaton-ems-test-4",
     version="1.0.0",
     author="Openbaton",
     author_email="dev@openbaton.org",
@@ -16,7 +16,7 @@ setup(
     url="http://openbaton.github.io/",
     packages=["ems"],
     install_requires= ["pika", "gitpython"],
-    long_description="Element management system that works in conjuction Openbaton Generiv-VNFM",
+    long_description="Element management system that works in conjuction with Openbaton Generic-VNFM",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
@@ -29,5 +29,4 @@ setup(
             'openbaton-ems = ems.ems:main'
         ]
     },
-    data_files=[("/opt/openbaton/ems/upstart", ["etc/openbaton/init.d/openbaton-ems-debian", "etc/openbaton/init.d/centos-upstart"]),]
 )
