@@ -6,8 +6,8 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(
-    name="openbaton-ems-test-4",
-    version="1.0.0",
+    name="openbaton-ems",
+    version="1.0.1",
     author="Openbaton",
     author_email="dev@openbaton.org",
     description="Openbaton generic EMS",
