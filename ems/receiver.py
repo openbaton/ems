@@ -152,6 +152,7 @@ def repos_scripts_update(dict_msg):
 def scripts_update(dict_msg):
     log.info("Updating scripts")
     script_name = dict_msg.get('name')
+    payload = dict_msg.get('payload')
     script_payload = base64.b64decode(payload)
     try:
         f = open(scripts_path + "/" + script_name, "w")
