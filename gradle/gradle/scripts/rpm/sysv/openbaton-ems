@@ -1,0 +1,115 @@
+#!/bin/sh
+
+# Copyright (c) 2016 Open Baton (http://www.openbaton.org)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+##########################
+#### General Settings ####
+##########################
+
+#set -x # only for DEBUG
+
+# Make available the functions defined in /lib/lsb/init-functions and /etc/init.d/functions
+. /lib/lsb/init-functions
+. /etc/init.d/functions
+
+
+##########################
+#### Global Variables ####
+##########################
+
+OPENBATON_COMPONENT_NAME_FANCY="Element Management System (EMS)"
+OPENBATON_COMPONENT_NAME=ems
+OPENBATON_COMPONENT_RELATIVE_SUBPATH=ems
+
+OPENBATON_COMPONENT_INSTALL_DIR=/usr/lib/openbaton/${OPENBATON_COMPONENT_RELATIVE_SUBPATH}
+OPENBATON_COMPONENT_RUN_SCRIPT_NAME="ems.py"
+
+#OPENBATON_BASE_CONFIG_DIR=/etc/openbaton
+#OPENBATON_COMPONENT_CONFIG_FILE=openbaton-${OPENBATON_COMPONENT_NAME}.properties TODO: this value is hardcoded: should be passed as argument
+
+OPENBATON_COMPONENT_PID_FILE=/var/run/openbaton-${OPENBATON_COMPONENT_NAME}.pid
+DAEMON_USER=root
+OSTYPE=$(uname)
+
+
+####################
+#### Open Baton ####
+####################
+
+check_already_running () {
+    instance=$(ps aux | grep -v grep | grep "${OPENBATON_COMPONENT_INSTALL_DIR}/${OPENBATON_COMPONENT_RUN_SCRIPT_NAME}" | wc -l)
+    if [ ${instance} -ne 0 ]; then
+        log_warning_msg "The Open Baton ${OPENBATON_COMPONENT_NAME_FANCY} is already running"
+        exit 1
+    fi
+}
+
+configure () {
+    check_already_running
+}
+
+start () {
+    configure
+    log_success_msg "Starting the Open Baton ${OPENBATON_COMPONENT_NAME_FANCY} .."
+    #start-stop-daemon --start --background --pidfile ${OPENBATON_COMPONENT_PID_FILE} --make-pidfile --user ${DAEMON_USER} --chuid ${DAEMON_USER} --exec /usr/bin/python -- ${OPENBATON_COMPONENT_INSTALL_DIR}/${OPENBATON_COMPONENT_RUN_SCRIPT_NAME}
+    exec /usr/bin/python ${OPENBATON_COMPONENT_INSTALL_DIR}/${OPENBATON_COMPONENT_RUN_SCRIPT_NAME} &
+    echo "$!" > ${OPENBATON_COMPONENT_PID_FILE}
+    cat ${OPENBATON_COMPONENT_PID_FILE}
+}
+
+stop () {
+    log_success_msg "Stopping the Open Baton ${OPENBATON_COMPONENT_NAME_FANCY} .."
+    #start-stop-daemon --stop --pidfile ${OPENBATON_COMPONENT_PID_FILE}
+    kill $(cat ${OPENBATON_COMPONENT_PID_FILE})
+}
+
+restart () {
+    stop
+    start
+}
+
+usage () {
+    echo "Open Baton ${OPENBATON_COMPONENT_NAME_FANCY}"
+    echo "Usage:\n\t [openbaton-${OPENBATON_COMPONENT_NAME} start|stop|restart] | [service openbaton-${OPENBATON_COMPONENT_NAME} start|stop|restart] | [start|stop openbaton-${OPENBATON_COMPONENT_NAME}] | [systemctl start|stop openbaton-${OPENBATON_COMPONENT_NAME}.service]"
+}
+
+
+##
+#   MAIN
+##
+
+if [ ${#} -eq 0 ]; then
+    usage
+    exit 1
+fi
+
+for cmd in ${@}
+do
+    case ${cmd} in
+        "start" )
+            start ;;
+        "stop" )
+            stop ;;
+        "restart" )
+            restart ;;
+        *)
+            usage;;
+    esac
+    if [ $? -ne 0 ]; then
+        exit 1
+    fi
+done
+

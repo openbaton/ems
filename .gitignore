@@ -61,6 +61,11 @@ docs/_build/
 target/
 
 # Intellij
-
 .idea/
 log/
+
+# Python tools
+python-tools/
+
+# Gradle
+.gradle/
