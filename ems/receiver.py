@@ -171,6 +171,18 @@ def scripts_update(dict_msg):
         status = 0
         return generate_response(out=out, err=err, status=status)
 
+def save_vnfr_dependency(dict_msg):
+    log.info("Saving vnfr dependency")
+    # ----- Json file
+    # get the path where to save the file
+    # get vnfrdependency json
+    # save to file as ob_parameters.json
+    # convert the json to yaml
+    # save to file as ob_parameters.yaml
+    # convert json into bash structure
+    # save the file as ob_parameters.sh
+
+
 
 def on_message(message):
     logging.basicConfig(filename=logging_dir + '/ems-receiver.log', level=logging.INFO)
@@ -202,7 +214,8 @@ def on_message(message):
         return repos_scripts_update(dict_msg)
     elif action == "SCRIPTS_UPDATE":
        return scripts_update(dict_msg)
-
+    elif action == "SAVE_VNFR_DEPENDENCY":
+       return save_vnfr_dependency(dict_msg);
 
 def generate_response(out, err, status):
     if out is None:
