@@ -22,6 +22,7 @@ import json
 import logging
 import subprocess
 import traceback
+import yaml
 from git import Repo, GitCommandError
 import os
 
@@ -31,6 +32,7 @@ log = logging.getLogger(__name__)
 logging_dir = '/var/log/openbaton/'
 # the environmental variable SCRIPTS_PATH is set everytime the script-path was contained in the json message, you can use after you cloned or saved the script
 scripts_path = "/opt/openbaton/scripts"
+ob_parameters_file_name = "ob_parameters"
 
 def save_scripts(dict_msg):
     log.info("Recevied save scripts command")
@@ -174,13 +176,29 @@ def scripts_update(dict_msg):
 def save_vnfr_dependency(dict_msg):
     log.info("Saving vnfr dependency")
     # ----- Json file
-    # get the path where to save the file
+    # get the base path where to save the file
+    parameters_file_path_base = dict_msg.get('script-path') + "/" + ob_parameters_file_name
+    # create file path for yaml, json and bash
+    parameters_file_path_json = parameters_file_path_base + ".json"
+    parameters_file_path_yaml = parameters_file_path_base + ".yaml"
+    parameters_file_path_bash = parameters_file_path_base + ".sh"
     # get vnfrdependency json
+    vnfr_dependency = dict_msg.get("payload")
     # save to file as ob_parameters.json
-    # convert the json to yaml
-    # save to file as ob_parameters.yaml
-    # convert json into bash structure
-    # save the file as ob_parameters.sh
+    f = open(parameters_file_path_json, "w")
+    f.write(vnfr_dependency)
+    f.close()
+    log.info("Saved file %s" % parameters_file_path_json)
+
+    out = str(os.listdir(parameters_file_path_json))
+    err = ""
+    status = 0
+    # convert the json to yaml and write to the file
+    yaml.dump(vnfr_dependency,parameters_file_path_yaml,allow_unicode=True )
+    # TODO convert json into bash structure
+    # TODO save the file as ob_parameters.sh
+    # return response
+    return generate_response(out=out, err=err, status=status)
 
 
 
