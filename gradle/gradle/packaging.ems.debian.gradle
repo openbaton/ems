@@ -58,7 +58,10 @@ task makeDeb(type: Deb) {
     from("python-tools/")                                               { into "${baseBinaryDir}/${exeSubpathName}/python-tools" }
 
     from("gradle/gradle/scripts/deb/sysv/${fullName}")                  { into "/usr/bin/" }                                    // executable to run the Component
+    // ------------------------------------------
+    // To be included only for DEB package for Trusty
     from("gradle/gradle/scripts/deb/sysv/${fullName}")                  { into "/etc/init.d/" }                                 // executable to run the Component as a service (SysV)
+    // ------------------------------------------
     from("gradle/gradle/scripts/deb/upstart/${fullName}.conf")          { into "/etc/init/" }                                   // conf file to run the Component as a service (Upstart)
     from("gradle/gradle/scripts/deb/systemd/${fullName}.service")       { into "/etc/systemd/system/" }                         // executable to run the Component as a service (Systemd)
     from("gradle/gradle/scripts/deb/systemd/${fullName}.service")       { into "/usr/lib/systemd/system/" }                     // executable to run the Component as a service (Systemd)
