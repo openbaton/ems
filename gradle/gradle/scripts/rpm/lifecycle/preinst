@@ -1,0 +1,68 @@
+#!/bin/sh
+
+# Copyright (c) 2016 Open Baton (http://www.openbaton.org)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+%pre
+
+##########################
+#### General Settings ####
+##########################
+
+#set -x # only for DEBUG
+
+# Make available the functions defined in /lib/lsb/init-functions
+. /lib/lsb/init-functions
+
+
+##########################
+#### Global Variables ####
+##########################
+
+OPENBATON_COMPONENT_NAME_FANCY="Element Management System (EMS)"
+OPENBATON_COMPONENT_NAME=ems
+OPENBATON_COMPONENT_RELATIVE_SUBPATH=ems
+
+OPENBATON_BASE_INSTALL_DIR=/usr/lib/openbaton
+OPENBATON_COMPONENT_INSTALL_DIR=${OPENBATON_BASE_INSTALL_DIR}/${OPENBATON_COMPONENT_RELATIVE_SUBPATH}/
+
+
+####################
+#### Open Baton ####
+####################
+
+remove_existing_old_version_installed () {
+    if [ -d ${OPENBATON_COMPONENT_INSTALL_DIR} ]; then
+        rm -r ${OPENBATON_COMPONENT_INSTALL_DIR}
+        log_success_msg "Removing old Open Baton ${OPENBATON_COMPONENT_NAME_FANCY} .."
+    fi
+}
+
+
+##############
+#### Main ####
+##############
+
+case "${1}" in  
+    1|2)
+        remove_existing_old_version_installed
+        ;;
+    *)
+        log_failure_msg "preinst called with unknown argument ${1}"
+        exit 1
+        ;;
+esac
+
+exit 0
