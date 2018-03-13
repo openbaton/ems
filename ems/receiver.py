@@ -25,6 +25,7 @@ import traceback
 import yaml
 from git import Repo, GitCommandError
 import os
+from sets import Set
 
 __author__ = 'lto,ogo'
 
@@ -173,33 +174,112 @@ def scripts_update(dict_msg):
         status = 0
         return generate_response(out=out, err=err, status=status)
 
+
+def save_vnf_parameters(parameters_file_path_bash, vnf_parameters):
+    with open(parameters_file_path_bash, 'a+') as f:
+        f.write("# VNF Parameters\n")
+
+        for vnf_type in vnf_parameters.keys():
+            log.debug("Reading VNF Parameters of VNF type: " + vnf_type)
+            vnf_param_str = "OB_" + vnf_type + "_VNF_"
+            internal_parameters = vnf_parameters.get(vnf_type).get('parameters')
+
+            for vnf_parameter_key in internal_parameters.keys():
+                vnf_param_str += vnf_parameter_key + "=" + internal_parameters.get(vnf_parameter_key) + "\n"
+                log.debug(vnf_param_str)
+                f.write(vnf_param_str)
+
+        f.flush()
+        os.fsync(f.fileno())
+
+
+def save_vnfc_parameters(parameters_file_path_bash, vnfc_parameters):
+    with open(parameters_file_path_bash, 'a+') as f:
+        f.write("\n# VNFC Parameters\n")
+
+        # create a list of vnfc parameters existing in at least one vnfc of the same vnf_type
+        all_vnfc_parameter_keys_for_vnf_type = {}
+        for vnf_type in vnfc_parameters.keys():
+            all_vnfc_parameter_keys_for_vnf_type[vnf_type] = Set([])
+            for vnfc_id_for_vnf_type, vnfc_content_for_vnf_type in vnfc_parameters.get(vnf_type).get(
+                    'parameters').iteritems():
+                parameters = vnfc_content_for_vnf_type.get('parameters')
+                for parameter_key in parameters.keys():
+                    all_vnfc_parameter_keys_for_vnf_type[vnf_type].add(parameter_key)
+
+        all_vnfc_parameters = {}
+        for vnf_type in vnfc_parameters.keys():
+            log.debug("Reading VNFC parameters of VNF type: " + vnf_type + " which keys are:")
+            log.debug(all_vnfc_parameter_keys_for_vnf_type[vnf_type])
+
+            all_vnfc_parameters_for_vnf_type = {}
+            for parameter_key in all_vnfc_parameter_keys_for_vnf_type[vnf_type]:
+                log.debug("Reading values for VNFC parameter key: " + parameter_key)
+                vnfc_param_str = "OB_" + vnf_type + "_VNFC_" + parameter_key + "="
+
+                # initialise list for values of a vnfc parameter key
+                if all_vnfc_parameters_for_vnf_type.get(parameter_key) is None:
+                    all_vnfc_parameters_for_vnf_type.setdefault(parameter_key, [])
+
+                # read the values of each vnfc parameter of each vnf_type ...
+                for vnfc_content_for_vnf_type in vnfc_parameters.get(vnf_type).get('parameters').values():
+                    parameters = vnfc_content_for_vnf_type.get('parameters')
+
+                    # ... and for each parameter_key adds:
+                    #  - the vnfc parameter value, if this vnfc has this parameter
+                    #  - a "NA" value, otherwise
+                    if parameter_key in parameters.keys():
+                        vnfc_parameter_value = parameters.get(parameter_key)
+                    else:
+                        vnfc_parameter_value = "NA"
+                    all_vnfc_parameters_for_vnf_type.get(parameter_key).append(vnfc_parameter_value)
+                    vnfc_param_str += vnfc_parameter_value + ":"
+
+                # remove last ':'
+                vnfc_param_str = vnfc_param_str[:-1] + "\n"
+                log.debug(vnfc_param_str)
+                f.write(vnfc_param_str)
+
+            all_vnfc_parameters[vnf_type] = all_vnfc_parameters_for_vnf_type
+
+        f.flush()
+        os.fsync(f.fileno())
+
+
+
 def save_vnfr_dependency(dict_msg):
-    log.info("Saving vnfr dependency")
-    # ----- Json file
+    log.info("Saving VNFR configuration and dependency parameters")
     # get the base path where to save the file
     parameters_file_path_base = dict_msg.get('script-path') + "/" + ob_parameters_file_name
+
     # create file path for yaml, json and bash
     parameters_file_path_json = parameters_file_path_base + ".json"
     parameters_file_path_yaml = parameters_file_path_base + ".yaml"
     parameters_file_path_bash = parameters_file_path_base + ".sh"
+
     # get vnfrdependency json
     vnfr_dependency = dict_msg.get("payload")
+
     # save to file as ob_parameters.json
     f = open(parameters_file_path_json, "w")
     f.write(vnfr_dependency)
     f.close()
     log.info("Saved file %s" % parameters_file_path_json)
-
     out = str(os.listdir(parameters_file_path_json))
     err = ""
     status = 0
-    # convert the json to yaml and write to the file
-    yaml.dump(vnfr_dependency,parameters_file_path_yaml,allow_unicode=True )
-    # TODO convert json into bash structure
-    # TODO save the file as ob_parameters.sh
+
+    # convert the json to yaml and write to the file ob_parameters.yaml
+    yaml.dump(vnfr_dependency, parameters_file_path_yaml, allow_unicode=True)
+
+    # read json vnfr_dependency and save the parameters to the file ob_parameters.sh (to be sourced)
+    vnf_parameters = json.loads(vnfr_dependency.get('parameters'))
+    vnfc_parameters = json.loads(vnfr_dependency.get('vnfcParameters'))
+    save_vnf_parameters(parameters_file_path_bash, vnf_parameters)
+    save_vnfc_parameters(parameters_file_path_bash, vnfc_parameters)
+
     # return response
     return generate_response(out=out, err=err, status=status)
-
 
 
 def on_message(message):

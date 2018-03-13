@@ -64,3 +64,10 @@ target/
 
 .idea/
 log/
+
+
+# Python tools
+python-tools/
+
+# Gradle
+.gradle/
