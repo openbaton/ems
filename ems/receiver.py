@@ -184,7 +184,7 @@ def save_vnf_parameters(parameters_file_path_bash, vnf_parameters):
 
         for vnf_type in vnf_parameters.keys():
             log.debug("Reading VNF Parameters of VNF type: " + vnf_type)
-            vnf_param_str = "OB_" + vnf_type + "_VNF_"
+            vnf_param_str = "export OB_" + vnf_type + "_VNF_"
             internal_parameters = vnf_parameters.get(vnf_type).get('parameters')
 
             for vnf_parameter_key in internal_parameters.keys():
@@ -219,7 +219,7 @@ def save_vnfc_parameters(parameters_file_path_bash, vnfc_parameters):
             all_vnfc_parameters_for_vnf_type = {}
             for parameter_key in all_vnfc_parameter_keys_for_vnf_type[vnf_type]:
                 log.debug("Reading values for VNFC parameter key: " + parameter_key)
-                vnfc_param_str = "OB_" + vnf_type + "_VNFC_" + parameter_key + "="
+                vnfc_param_str = "export OB_" + vnf_type + "_VNFC_" + parameter_key + "="
 
                 # initialise list for values of a vnfc parameter key
                 if all_vnfc_parameters_for_vnf_type.get(parameter_key) is None:
