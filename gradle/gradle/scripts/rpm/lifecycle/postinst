@@ -1,0 +1,174 @@
+#!/bin/sh
+
+# Copyright (c) 2016 Open Baton (http://www.openbaton.org)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+%post
+
+##########################
+#### General Settings ####
+##########################
+
+#set -x # only for DEBUG
+
+# Make available the functions defined in /lib/lsb/init-functions
+. /lib/lsb/init-functions
+. /etc/init.d/functions
+
+
+##########################
+#### Global Variables ####
+##########################
+
+OPENBATON_COMPONENT_NAME_FANCY="Element Managemen System (EMS)"
+OPENBATON_COMPONENT_NAME=ems
+OPENBATON_COMPONENT_RELATIVE_SUBPATH=ems
+
+OPENBATON_BASE_DIR=/usr
+OPENBATON_COMPONENT_EXE_DIR=${OPENBATON_BASE_DIR}/bin
+
+OPENBATON_BASE_INSTALL_DIR=/usr/lib/openbaton
+OPENBATON_COMPONENT_INSTALL_DIR=${OPENBATON_BASE_INSTALL_DIR}/${OPENBATON_COMPONENT_RELATIVE_SUBPATH}/
+
+OPENBATON_BASE_CONFIG_DIR=/etc/openbaton
+OPENBATON_COMPONENT_CONFIG_FILE=openbaton-${OPENBATON_COMPONENT_NAME}.properties
+
+OPENBATON_COMPONENT_AUTOSTART_DEFAULT=true
+OPENBATON_COMPONENT_AUTOSTART=${OPENBATON_COMPONENT_AUTOSTART:-$OPENBATON_COMPONENT_AUTOSTART_DEFAULT}
+
+
+####################
+#### Open Baton ####
+####################
+
+configure_new_installation () {
+    log_success_msg "Configuring Open Baton ${OPENBATON_COMPONENT_NAME_FANCY} installation .."
+    chmod a+x ${OPENBATON_COMPONENT_EXE_DIR}/openbaton-${OPENBATON_COMPONENT_NAME}
+    configure_libraries
+
+    # Configure the EMS service to restart at reboot
+    if systemctl enable openbaton-${OPENBATON_COMPONENT_NAME}.service ; then
+        :
+    else
+        update-rc.d openbaton-${OPENBATON_COMPONENT_NAME} default
+    fi
+
+    log_success_msg "Open Baton ${OPENBATON_COMPONENT_NAME_FANCY} installation completed"
+}
+
+configure_libraries() {
+    python_tools_dir=${OPENBATON_COMPONENT_INSTALL_DIR}/python-tools
+
+    cd ${python_tools_dir}/pypa-setuptools
+    python setup.py install
+
+    cd ${python_tools_dir}/ez_setup/
+    python setup.py install
+
+    cd ${python_tools_dir}/smmap/
+    python setup.py install
+
+    cd ${python_tools_dir}/gitdb/
+    python setup.py install
+
+    cd ${python_tools_dir}/wsgiref/
+    python setup.py install
+
+    cd ${python_tools_dir}/GitPython/
+    python setup.py install
+
+    cd ${python_tools_dir}/pika/
+    python setup.py install
+}
+
+configure_for_upgrade () {
+    ## Procedure to merge old and new properties files ##
+
+    # The old properties file is copied in /tmp before this upgrade procedure is executed (see 'prerm' file)
+    cp /tmp/${OPENBATON_COMPONENT_CONFIG_FILE} /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.old
+    cp ${OPENBATON_BASE_CONFIG_DIR}/${OPENBATON_COMPONENT_CONFIG_FILE} /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.new
+
+    # Extract the properties keys from the old properties file
+    awk -F'=' '{if($0 ~ "=") {print $1 "="}}' /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.old > /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.old_keys
+    sed -i s/\#//g /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.old_keys
+    sed -i s/\ //g /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.old_keys
+
+    # Extract the properties keys from the new properties file
+    awk -F'=' '{if($0 ~ "=") {print $1 "="}}' /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.new > /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.new_keys
+    sed -i s/\#//g /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.new_keys
+    sed -i s/\ //g /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.new_keys
+
+    # Extract the common properties keys between the old and new properties files
+    grep -Fwf /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.new_keys /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.old_keys > /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.common_keys
+
+    # Extract the all line from the old property file for each common properties key
+    sed -i s/=//g /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.new_keys
+    grep -Fwf /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.new_keys /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.old      > /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.common_keys_old_lines
+
+    # For each common key overwrite the old property value in the new properties file
+    exec 3</tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.common_keys
+    exec 4</tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.common_keys_old_lines
+    while IFS='' read -r key <&3 && read -r line <&4; do
+    key=$(echo $key | awk -F'=' '{print $1}')
+    sed -i "s|.*${key}\s*=.*|${line}|" /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.new
+    done
+    exec 3<&-
+    exec 4<&-
+
+    # Overwrite the new properties file with the 'upgraded' new properties file
+    mv /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}.new ${OPENBATON_BASE_CONFIG_DIR}/${OPENBATON_COMPONENT_CONFIG_FILE}
+
+    # Clear tmp files used for upgrade
+    rm /tmp/${OPENBATON_COMPONENT_CONFIG_FILE}*
+
+    log_success_msg "Upgrading Open Baton ${OPENBATON_COMPONENT_NAME_FANCY} installation .."
+}
+
+start_component () {
+    # Allow the use of the .deb package to install Open Baton with Docker
+    if [ "${OPENBATON_COMPONENT_AUTOSTART}" = "true" ]; then
+        if systemctl start openbaton-${OPENBATON_COMPONENT_NAME}.service >/dev/null 2>&1 ; then
+            log_success_msg "Starting the Open Baton ${OPENBATON_COMPONENT_NAME_FANCY} .."
+        elif service openbaton-${OPENBATON_COMPONENT_NAME} start >/dev/null 2>&1 ; then
+            log_success_msg "Starting the Open Baton ${OPENBATON_COMPONENT_NAME_FANCY} .."
+        elif start openbaton-${OPENBATON_COMPONENT_NAME} >/dev/null 2>&1 ; then
+            log_success_msg "Starting the Open Baton ${OPENBATON_COMPONENT_NAME_FANCY} .."
+        else
+            log_failure_msg "Starting the Open Baton ${OPENBATON_COMPONENT_NAME_FANCY}"
+        fi
+    fi
+}
+
+##############
+#### Main ####
+##############
+
+case "${1}" in
+    1) # new installation (during first installation the postinst file is invoked as: 'postinst configure')
+        configure_new_installation
+        ;;
+    2) # upgrade (during upgrade the postinst file is invoked as: 'postinst configure <old_version_number>')
+        configure_for_upgrade
+        ;;
+    *)
+        log_failure_msg "postinst called with unknown argument ${1}"
+        exit 1
+        ;;
+esac
+
+start_component
+
+exit 0
+

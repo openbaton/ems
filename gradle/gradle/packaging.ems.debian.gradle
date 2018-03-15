@@ -1,0 +1,117 @@
+/*
+ * Copyright (c) 2016 Open Baton (http://www.openbaton.org)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+ext {
+    debianApplicationVersionFull = "${applicationVersionFull}".replaceAll("-", ".")
+
+    baseName = 'openbaton'
+    componentName = 'ems'
+    fullName = "${baseName}-${componentName}"
+    propertiesDir = '/etc/openbaton'
+    baseBinaryDir = '/usr/lib/openbaton'
+    exeSubpathName = "${componentName}".replaceAll("-", "/")
+}
+
+task makeDeb(type: Deb) {
+    packageName = (applicationRelease) ? "${fullName}" : "${fullName}-nightly"
+    version = debianApplicationVersionFull
+    //release = 1 
+    priority = 'optional'
+    arch = 'all'
+    maintainer = 'Open Baton Team <info@open-baton.org>'
+    vendor = 'Open Source (Implemented by Fraunhofer FOKUS and TUB)'
+    license = 'Apache 2.0 License'
+    url = 'http://openbaton.github.io/index.html'
+    summary = 'Open Baton Element Management System (EMS)'
+    packageDescription = 'The Element Management System (EMS) is a component of the Open Baton project which is an ETSI compliant implementation of a NFV Management and Orchestration (MANO) System'
+
+    preInstall file('gradle/gradle/scripts/deb/lifecycle/preinst')
+    postInstall file('gradle/gradle/scripts/deb/lifecycle/postinst')
+    preUninstall file('gradle/gradle/scripts/deb/lifecycle/prerm')
+
+    requires('python', '2.7.0', 4)
+    requires('git')
+
+    // Copy files from "from path" to "into path"
+    from("etc/openbaton-ems.properties") {                                                                                      // properties file
+        into "${propertiesDir}"
+    }
+
+    // EMS code files
+    from("LICENSE")                                                     { into "${baseBinaryDir}/${exeSubpathName}" }
+    from("ems/ems.py")                                                  { into "${baseBinaryDir}/${exeSubpathName}" }
+    from("ems/receiver.py")                                             { into "${baseBinaryDir}/${exeSubpathName}" }
+    from("ems/utils.py")                                                { into "${baseBinaryDir}/${exeSubpathName}" }
+    from("python-tools/")                                               { into "${baseBinaryDir}/${exeSubpathName}/python-tools" }
+
+    from("gradle/gradle/scripts/deb/sysv/${fullName}")                  { into "/usr/bin/" }                                    // executable to run the Component
+    // ------------------------------------------
+    // To be included only for DEB package for Trusty
+    from("gradle/gradle/scripts/deb/sysv/${fullName}")                  { into "/etc/init.d/" }                                 // executable to run the Component as a service (SysV)
+    // ------------------------------------------
+    from("gradle/gradle/scripts/deb/upstart/${fullName}.conf")          { into "/etc/init/" }                                   // conf file to run the Component as a service (Upstart)
+    from("gradle/gradle/scripts/deb/systemd/${fullName}.service")       { into "/etc/systemd/system/" }                         // executable to run the Component as a service (Systemd)
+    from("gradle/gradle/scripts/deb/systemd/${fullName}.service")       { into "/usr/lib/systemd/system/" }                     // executable to run the Component as a service (Systemd)
+    from("gradle/gradle/scripts/deb/systemd/${fullName}.env")           { into "/usr/lib/openbaton/systemd/env/" }              // environment file to run the Component as a service (Systemd)
+    from("gradle/gradle/scripts/deb/systemd/${fullName}.preexecstart")  { into "/usr/lib/openbaton/systemd/preexecstart/" }     // preexecstart file to run the Component as a service (Systemd)
+}
+
+
+task makeRpm(type: Rpm) {
+    packageName = (applicationRelease) ? "${fullName}" : "${fullName}-nightly"
+    version = debianApplicationVersionFull
+    //release = 1
+    priority = 'optional'
+    arch I386
+    arch X86_64
+    os LINUX
+    user = 'root'
+    maintainer = 'Open Baton Team <info@open-baton.org>'
+    vendor = 'Open Source (Implemented by Fraunhofer FOKUS and TUB)'
+    license = 'Apache 2.0 License'
+    url = 'http://openbaton.github.io/index.html'
+    summary = 'Open Baton Element Management System (EMS)'
+    packageDescription = 'The Element Management System (EMS) is a component of the Open Baton project which is an ETSI compliant implementation of a NFV Management and Orchestration (MANO) System'
+
+    preInstall file('gradle/gradle/scripts/rpm/lifecycle/preinst')
+    postInstall file('gradle/gradle/scripts/rpm/lifecycle/postinst')
+    preUninstall file('gradle/gradle/scripts/rpm/lifecycle/prerm')
+
+    requires('redhat-lsb-core')
+    requires('python', '2.7.0', 4)
+    requires('git')
+
+    // Copy files from "from path" to "into path"
+    from("etc/openbaton-ems.properties") {                                                                                      // properties file
+        into "${propertiesDir}"
+    }
+
+    // EMS code files
+    from("LICENSE")                                                     { into "${baseBinaryDir}/${exeSubpathName}" }
+    from("ems/ems.py")                                                  { into "${baseBinaryDir}/${exeSubpathName}" }
+    from("ems/receiver.py")                                             { into "${baseBinaryDir}/${exeSubpathName}" }
+    from("ems/utils.py")                                                { into "${baseBinaryDir}/${exeSubpathName}" }
+    from("python-tools/")                                               { into "${baseBinaryDir}/${exeSubpathName}/python-tools" }
+
+    from("gradle/gradle/scripts/rpm/sysv/${fullName}")                  { into "/usr/bin/" }                                    // executable to run the Component
+    from("gradle/gradle/scripts/rpm/sysv/${fullName}")                  { into "/etc/init.d/" }                                 // executable to run the Component as a service (SysV)
+    from("gradle/gradle/scripts/rpm/upstart/${fullName}.conf")          { into "/etc/init/" }                                   // conf file to run the Component as a service (Upstart)
+    from("gradle/gradle/scripts/rpm/systemd/${fullName}.service")       { into "/etc/systemd/system/" }                         // executable to run the Component as a service (Systemd)
+    from("gradle/gradle/scripts/rpm/systemd/${fullName}.service")       { into "/usr/lib/systemd/system/" }                     // executable to run the Component as a service (Systemd)
+    from("gradle/gradle/scripts/rpm/systemd/${fullName}.env")           { into "/usr/lib/openbaton/systemd/env/" }              // environment file to run the Component as a service (Systemd)
+    from("gradle/gradle/scripts/rpm/systemd/${fullName}.preexecstart")  { into "/usr/lib/openbaton/systemd/preexecstart/" }     // preexecstart file to run the Component as a service (Systemd)
+}
+
