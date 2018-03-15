@@ -176,6 +176,7 @@ def scripts_update(dict_msg):
 
 
 def save_vnf_parameters(parameters_file_path_bash, vnf_parameters):
+    log.info("Reading VNF Parameters")
     with open(parameters_file_path_bash, 'a+') as f:
         f.write("# VNF Parameters\n")
 
@@ -194,6 +195,7 @@ def save_vnf_parameters(parameters_file_path_bash, vnf_parameters):
 
 
 def save_vnfc_parameters(parameters_file_path_bash, vnfc_parameters):
+    log.info("Reading VNFC Parameters")
     with open(parameters_file_path_bash, 'a+') as f:
         f.write("\n# VNFC Parameters\n")
 
@@ -250,33 +252,41 @@ def save_vnfc_parameters(parameters_file_path_bash, vnfc_parameters):
 def save_vnfr_dependency(dict_msg):
     log.info("Saving VNFR configuration and dependency parameters")
     # get the base path where to save the file
-    parameters_file_path_base = dict_msg.get('script-path') + "/" + ob_parameters_file_name
+    parameters_file_path_base_dir = dict_msg.get('script-path')
+    parameters_file_path_base = parameters_file_path_base_dir + "/" + ob_parameters_file_name
 
     # create file path for yaml, json and bash
     parameters_file_path_json = parameters_file_path_base + ".json"
     parameters_file_path_yaml = parameters_file_path_base + ".yaml"
     parameters_file_path_bash = parameters_file_path_base + ".sh"
 
-    # get vnfrdependency json
-    vnfr_dependency = dict_msg.get("payload")
+    # get vnfr_dependency json (as string)
+    vnfr_dependency = dict_msg.get('payload')
 
     # save to file as ob_parameters.json
     f = open(parameters_file_path_json, "w")
     f.write(vnfr_dependency)
     f.close()
     log.info("Saved file %s" % parameters_file_path_json)
-    out = str(os.listdir(parameters_file_path_json))
-    err = ""
-    status = 0
 
     # convert the json to yaml and write to the file ob_parameters.yaml
-    yaml.dump(vnfr_dependency, parameters_file_path_yaml, allow_unicode=True)
+    # get vnfr_dependency json (as json object)
+    vnfr_dependency = json.loads(vnfr_dependency)
+    f = open(parameters_file_path_yaml, "w")
+    yaml.safe_dump(vnfr_dependency, f, allow_unicode=True, default_flow_style=False)
+    f.close()
+    log.info("Saved file %s" % parameters_file_path_yaml)
 
     # read json vnfr_dependency and save the parameters to the file ob_parameters.sh (to be sourced)
-    vnf_parameters = json.loads(vnfr_dependency.get('parameters'))
-    vnfc_parameters = json.loads(vnfr_dependency.get('vnfcParameters'))
+    vnf_parameters = vnfr_dependency.get('parameters')
+    vnfc_parameters = vnfr_dependency.get('vnfcParameters')
     save_vnf_parameters(parameters_file_path_bash, vnf_parameters)
     save_vnfc_parameters(parameters_file_path_bash, vnfc_parameters)
+    log.info("Saved file %s" % parameters_file_path_bash)
+
+    out = str(os.listdir(parameters_file_path_base_dir))
+    err = ""
+    status = 0
 
     # return response
     return generate_response(out=out, err=err, status=status)
