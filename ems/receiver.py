@@ -156,6 +156,8 @@ def scripts_update(dict_msg):
     log.info("Updating scripts")
     script_name = dict_msg.get('name')
     payload = dict_msg.get('payload')
+    path = dict_msg.get('script-path')
+    os.environ['SCRIPTS_PATH'] = path
     script_payload = base64.b64decode(payload)
     try:
         f = open(scripts_path + "/" + script_name, "w")
