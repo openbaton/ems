@@ -110,5 +110,3 @@ def main():
             #print("Trying to reconnect")
             # log.info("Trying to reconnect...")
 
-
-main()
