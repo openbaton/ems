@@ -98,7 +98,6 @@ def main():
                                   body='{"hostname":"%s"}' % hostname)
             channel.basic_qos(prefetch_count=1)
             channel.basic_consume(thread_function, queue='vnfm.%s.actions' % hostname)
-            print "Waiting for actions"
             channel.start_consuming()
         except Exception:
             # logging.exception('')

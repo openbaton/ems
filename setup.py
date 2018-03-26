@@ -7,7 +7,7 @@ def read(fname):
 
 setup(
     name="openbaton-ems",
-    version="1.0.11",
+    version="1.0.9",
     author="Openbaton",
     author_email="dev@openbaton.org",
     description="Openbaton generic EMS",
