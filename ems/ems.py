@@ -49,7 +49,7 @@ def main():
     if not os.path.exists(logging_dir):
         os.makedirs(logging_dir)
     logging.basicConfig(filename=logging_dir + '/ems-receiver.log', level=logging.INFO, format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s', datefmt='%m-%d %H:%M')
-    config_file_name = "/etc/openbaton/ems/conf.ini"
+    config_file_name = "/etc/openbaton/openbaton-ems.properties"
     log.debug(config_file_name)
     config = ConfigParser.ConfigParser()
     config.read(config_file_name)  # read config file
