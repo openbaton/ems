@@ -29,7 +29,7 @@ The EMS is typically installed by the Generic VNFM. Those are the commands execu
             pip install openbaton-ems
             add-upstart-ems
             
-After the installation make sure you configure the conf.ini file correctly: /etc/openbaton/ems/conf.ini
+After the installation make sure you configure the properties file correctly: /etc/openbaton/openbaton-ems.properties
 
 How to use EMS
 ---------------------------------
