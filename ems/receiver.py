@@ -82,7 +82,6 @@ def clone_scripts(dict_msg):
     log.info("Cloning from: %s into %s" % (url, path))
     try:
         Repo.clone_from(url, path)
-        print 'Cloned'
         log.info('Cloned')
         for file in os.listdir(path):
             st = os.stat(path + "/" + file)
@@ -92,7 +91,6 @@ def clone_scripts(dict_msg):
         status = 0
     except GitCommandError as e:
         log.info("Encountered error while cloning")
-        print 'Encountered error'
         err = traceback.format_exc()
         status = e.status
         out = None
