@@ -15,7 +15,7 @@ setup(
     keywords="python ems vnfm openbaton open baton",
     url="http://openbaton.github.io/",
     packages=["ems"],
-    install_requires= ["pika", "gitpython"],
+    install_requires= ["pika", "gitpython", "pyyaml"],
     long_description="Element management system that works in conjuction with Openbaton Generic-VNFM",
     classifiers=[
         "Development Status :: 4 - Beta",
