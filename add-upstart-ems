@@ -66,7 +66,7 @@ WantedBy=runlevel2.target runlevel4.target multi-user.target" > /usr/lib/systemd
 
 }
 
-if [ $(cat /etc/os-release | grep -i "debian/|ubuntu" | wc -l) -gt 0 ]; then
+if [ $(cat /etc/os-release | grep -i "debian\|ubuntu" | wc -l) -gt 0 ]; then
     os=ubuntu
 elif [ $(cat /etc/os-release | grep -i "centos" | wc -l) -gt 0 ]; then
     os=centos
