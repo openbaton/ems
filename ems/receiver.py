@@ -181,11 +181,11 @@ def save_vnf_parameters(parameters_file_path_bash, vnf_parameters):
 
         for vnf_type in vnf_parameters.keys():
             log.debug("Reading VNF Parameters of VNF type: " + vnf_type)
-            vnf_param_str = "export OB_" + vnf_type + "_VNF_"
+            vnf_param_str_pre = "export OB_" + vnf_type + "_VNF_"
             internal_parameters = vnf_parameters.get(vnf_type).get('parameters')
 
             for vnf_parameter_key in internal_parameters.keys():
-                vnf_param_str += vnf_parameter_key + "=" + internal_parameters.get(vnf_parameter_key) + "\n"
+                vnf_param_str = vnf_param_str_pre + vnf_parameter_key + "=" + internal_parameters.get(vnf_parameter_key) + "\n"
                 log.debug(vnf_param_str)
                 f.write(vnf_param_str)
 
