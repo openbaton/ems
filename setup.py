@@ -7,7 +7,7 @@ def read(fname):
 
 setup(
     name="openbaton-ems",
-    version="1.2.1",
+    version="1.2.2",
     author="Openbaton",
     author_email="dev@openbaton.org",
     description="Openbaton generic EMS",
@@ -15,7 +15,7 @@ setup(
     keywords="python ems vnfm openbaton open baton",
     url="http://openbaton.github.io/",
     packages=["ems"],
-    install_requires= ["pika", "gitpython", "pyyaml"],
+    install_requires= ["pika<=0.13.1", "gitpython", "pyyaml"],
     long_description="Element management system that works in conjuction with Openbaton Generic-VNFM",
     classifiers=[
         "Development Status :: 4 - Beta",
